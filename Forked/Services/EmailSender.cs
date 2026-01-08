@@ -7,7 +7,6 @@ namespace Forked.Services
 {
     public class EmailSender : IEmailSender
     {
-        //no -s
         private readonly IConfiguration _config;
         public EmailSender(IConfiguration config)
         {
