@@ -8,7 +8,7 @@ namespace Forked.Services
     public class EmailSender : IEmailSender
     {
         private readonly IConfiguration _config;
-
+        //Test SSH
         public EmailSender(IConfiguration config)
         {
             _config = config;
