@@ -1,6 +1,6 @@
 ﻿namespace Forked.Models.Domains
 {
-    public class UserFavoriteRecipe
+    public class UserFavoriteRecipe : Recipe
     {
     }
 }
