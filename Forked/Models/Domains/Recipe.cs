@@ -1,6 +1,8 @@
-﻿namespace Forked.Models.Domains
+﻿using Forked.Models.Interfaces;
+
+namespace Forked.Models.Domains
 {
-    public class Recipe
+    public class Recipe : BaseEntity
     {
     }
 }
