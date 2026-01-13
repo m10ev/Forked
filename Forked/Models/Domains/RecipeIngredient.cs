@@ -6,7 +6,7 @@
         public Recipe Recipe { get; set; } = null!;
         public int IngredientId { get; set; }
         public Ingredient Ingredient { get; set; } = null!;
-        public double Quantity { get; set; } = 0;
+        public double Quantity { get; set; }
         public string Unit { get; set; } = string.Empty;
         public string Preparation { get; set; } = string.Empty;
     }
