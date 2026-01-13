@@ -25,8 +25,9 @@
 
 ### Installation
 1. **Clone the repository**
-[![Clone Repo](https://img.shields.io/badge/GIT-Clone%20Repo-blue?style=for-the-badge&logo=github)](https://github.com/m10ev/forked.git)
 
 ```bash
 git clone https://github.com/m10ev/forked.git
 cd forked
+````
+[![Clone Repo](https://img.shields.io/badge/GIT-Clone%20Repo-blue?style=for-the-badge&logo=github)](https://github.com/m10ev/forked.git)
