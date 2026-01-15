@@ -10,12 +10,22 @@ public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : Identi
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
+    public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>().HasQueryFilter(u => u.DeletedAt == null);
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasQueryFilter(u => u.DeletedAt == null);
+
+            entity.HasIndex(u => u.Username)
+                  .IsUnique();
+
+            entity.HasIndex(u => u.Email)
+                  .IsUnique();
+        });
 
         modelBuilder.Entity<Recipe>(entity =>
         {
@@ -58,6 +68,22 @@ public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : Identi
             entity.HasOne(r => r.Recipe)
                   .WithMany(rec => rec.Reviews)
                   .HasForeignKey(r => r.RecipeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserFollow>(entity =>
+        {
+            entity.HasKey(uf => new { uf.FollowerId, uf.FollowingId });
+            entity.HasQueryFilter(uf =>  uf.DeletedAt == null);
+
+            entity.HasOne(uf => uf.Follower)
+                  .WithMany(u => u.Followers)
+                  .HasForeignKey(uf => uf.FollowerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(uf => uf.Following)
+                  .WithMany(u => u.Followers)
+                  .HasForeignKey(uf => uf.FollowingId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
     }
