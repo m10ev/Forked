@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <Folder Include="EmailTemplates\Notifications\" />
+    <Folder Include="Areas\" />
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 

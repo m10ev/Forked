@@ -20,7 +20,7 @@ public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : Identi
         {
             entity.HasQueryFilter(u => u.DeletedAt == null);
 
-            entity.HasIndex(u => u.Username)
+            entity.HasIndex(u => u.DisplayName)
                   .IsUnique();
 
             entity.HasIndex(u => u.Email)

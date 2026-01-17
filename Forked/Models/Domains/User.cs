@@ -5,7 +5,7 @@ namespace Forked.Models.Domains
 {
     public class User : IdentityUser, IAuditable
     {
-        public string Username { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
         public string? ProfilePicturePath { get; set; }
         public string? Bio { get; set; }
         public ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
