@@ -7,9 +7,11 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : IdentityDbContext<User>(options)
 {
     public DbSet<Recipe> Recipes => Set<Recipe>();
-    public DbSet<Review> Reviews => Set<Review>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
+    public DbSet<RecipeStep> RecipeSteps => Set<RecipeStep>();
+    public DbSet<Review> Reviews => Set<Review>();
+    public DbSet<UserFavoriteRecipe> UserFavoriteRecipes => Set<UserFavoriteRecipe>();
     public DbSet<UserFollow> UserFollows => Set<UserFollow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,7 +49,52 @@ public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : Identi
             entity.HasMany(r => r.RecipeIngredients)
                   .WithOne(ri => ri.Recipe)
                   .HasForeignKey(ri => ri.RecipeId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(r => r.RecipeSteps)
+                  .WithOne(rs => rs.Recipe)
+                  .HasForeignKey(rs => rs.RecipeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RecipeIngredient>(entity =>
+        {
+            entity.HasKey(ri => ri.Id);
+
+            entity.HasOne(ri => ri.Recipe)
+                  .WithMany(r => r.RecipeIngredients)
+                  .HasForeignKey(ri => ri.RecipeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ri => ri.Ingredient)
+                  .WithMany(i => i.RecipeIngredients)
+                  .HasForeignKey(ri => ri.IngredientId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Ingredient>(entity =>
+        {
+            entity.HasKey(i => i.Id);
+            
+            entity.HasMany(i => i.RecipeIngredients)
+                  .WithOne(ri => ri.Ingredient)
+                  .HasForeignKey(ri => ri.IngredientId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(i => i.Name)
+                  .IsUnique();
+        });
+
+        modelBuilder.Entity<RecipeStep>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(rs => rs.Recipe)
+                  .WithMany(r => r.RecipeSteps)
+                  .HasForeignKey(rs => rs.RecipeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.OwnsOne(rs => rs.ImagePaths, builder => { builder.ToJson(); });
         });
 
         modelBuilder.Entity<Review>(entity => {
@@ -68,6 +115,22 @@ public class ForkedDbContext(DbContextOptions<ForkedDbContext> options) : Identi
             entity.HasOne(r => r.Recipe)
                   .WithMany(rec => rec.Reviews)
                   .HasForeignKey(r => r.RecipeId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserFavoriteRecipe>(entity =>
+        {
+            entity.HasKey(ufr => new { ufr.UserId, ufr.RecipeId });
+            entity.HasQueryFilter(r => r.DeletedAt == null);
+
+            entity.HasOne(ufr => ufr.User)
+                  .WithMany(u => u.FavoriteRecipes)
+                  .HasForeignKey(ufr => ufr.UserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(ufr => ufr.Recipe)
+                  .WithMany(r => r.FavoritedByUsers)
+                  .HasForeignKey(ufr => ufr.RecipeId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

@@ -8,7 +8,7 @@ namespace Forked.Models.Domains
         public User Follower { get; set; } = null!;
         public string FollowingId { get; set; } = null!;
         public User Following { get; set; } = null!;
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
     }
