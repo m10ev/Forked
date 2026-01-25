@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddIdentityServices();
+builder.Services.AddRazorPages();
+builder.Services.AddEmailServices();
 
 var app = builder.Build();
 

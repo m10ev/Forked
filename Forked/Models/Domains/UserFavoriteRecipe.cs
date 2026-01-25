@@ -4,7 +4,7 @@ namespace Forked.Models.Domains
 {
     public class UserFavoriteRecipe : IAuditable
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public User User { get; set; } = null!;
         public int RecipeId { get; set; }
         public Recipe Recipe { get; set; } = null!;

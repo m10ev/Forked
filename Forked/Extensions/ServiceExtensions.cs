@@ -1,5 +1,8 @@
-﻿using Forked.Models.Domains;
+﻿using Forked.Data;
+using Forked.Models.Domains;
+using Forked.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Forked.Extensions
@@ -23,6 +26,11 @@ namespace Forked.Extensions
             })
                 .AddEntityFrameworkStores<ForkedDbContext>()
                 .AddDefaultTokenProviders();
+        }
+
+        public static void AddEmailServices(this IServiceCollection services)
+        {
+            services.AddTransient<IEmailSender, EmailSender>();
         }
     }
 }

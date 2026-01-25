@@ -1,0 +1,178 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirm Your Email</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .email-container {
+            background-color: #ffffff;
+            padding: 0;
+            border-radius: 16px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+        }
+
+            .email-header h1 {
+                margin: 0;
+                font-size: 28px;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+            }
+
+        .email-body {
+            padding: 40px 30px;
+        }
+
+            .email-body h2 {
+                color: #1a1a1a;
+                font-size: 24px;
+                font-weight: 600;
+                margin-bottom: 20px;
+            }
+
+            .email-body p {
+                color: #4a5568;
+                font-size: 16px;
+                line-height: 1.6;
+                margin-bottom: 16px;
+            }
+
+        .btn-container {
+            text-align: center;
+            margin: 35px 0;
+        }
+
+        .btn-confirm {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+            color: white;
+            padding: 16px 48px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.4);
+            transition: all 0.3s ease;
+        }
+
+            .btn-confirm:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 15px 35px rgba(255, 107, 107, 0.5);
+                color: white;
+            }
+
+        .divider {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+
+        .security-note {
+            background-color: #fff5f5;
+            border-left: 4px solid #ff6b6b;
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin: 25px 0;
+        }
+
+            .security-note p {
+                margin: 0;
+                font-size: 14px;
+                color: #4a5568;
+            }
+
+        .footer {
+            background-color: #f7fafc;
+            padding: 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #718096;
+            line-height: 1.6;
+        }
+
+            .footer a {
+                color: #ff6b6b;
+                text-decoration: none;
+            }
+
+                .footer a:hover {
+                    text-decoration: underline;
+                }
+
+        .logo {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            .email-header {
+                padding: 30px 20px;
+            }
+
+            .email-body {
+                padding: 30px 20px;
+            }
+
+            .btn-confirm {
+                padding: 14px 36px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="logo">🍴</div>
+            <h1>Forked</h1>
+        </div>
+
+        <div class="email-body">
+            <h2>Welcome aboard! 👋</h2>
+            <p>Thanks for joining Forked. We're excited to have you here! To get started, we just need to verify your email address.</p>
+
+            <div class="btn-container">
+                <a href="{{CONFIRMATION_LINK}}" class="btn-confirm">Confirm Your Email</a>
+            </div>
+
+            <div class="security-note">
+                <p><strong>🔒 Security tip:</strong> This link will expire in 24 hours. If you didn't create an account with Forked, you can safely ignore this email.</p>
+            </div>
+
+            <hr class="divider">
+
+            <p style="font-size: 14px; color: #718096;">If the button above doesn't work, copy and paste this link into your browser:</p>
+            <p style="font-size: 13px; color: #a0aec0; word-break: break-all;">{{CONFIRMATION_LINK}}</p>
+        </div>
+
+        <div class="footer">
+            <p><strong>Forked</strong></p>
+            <p>Questions? Contact us at <a href="mailto:support@forked.com">support@forked.com</a></p>
+            <p style="margin-top: 15px;">&copy; 2026 Forked. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

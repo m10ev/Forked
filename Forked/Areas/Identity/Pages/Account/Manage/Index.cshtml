@@ -1,0 +1,148 @@
+﻿@page
+@model Forked.Areas.Identity.Pages.Account.Manage.IndexModel
+@{
+    ViewData["Title"] = "Manage Profile";
+}
+
+<h4>Manage Your Profile</h4>
+<hr />
+<div class="text-success">@Model.StatusMessage</div>
+
+<form method="post" enctype="multipart/form-data">
+
+    <!-- Display Name -->
+    <div class="mb-3">
+        <label asp-for="Input.DisplayName" class="form-label"></label>
+        <input asp-for="Input.DisplayName" class="form-control" />
+        <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+    </div>
+
+    <!-- Bio -->
+    <div class="mb-3">
+        <label asp-for="Input.Bio" class="form-label"></label>
+        <textarea asp-for="Input.Bio" class="form-control"></textarea>
+        <span asp-validation-for="Input.Bio" class="text-danger"></span>
+    </div>
+
+    <!-- Phone Number -->
+    <div class="mb-3">
+        <label asp-for="Input.PhoneNumber" class="form-label"></label>
+        <input asp-for="Input.PhoneNumber" class="form-control" />
+        <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <!-- Profile Picture Upload -->
+    <div class="mb-3">
+        <label class="form-label">Profile Picture</label>
+        <input type="file" id="profilePictureInput" class="form-control" />
+        <span class="text-danger" asp-validation-for="Input.ProfilePicturePath"></span>
+    </div>
+
+    <!-- Circular preview (clickable) -->
+    <div class="mb-3">
+        <img id="profilePicturePreview" src="@Model.Input.ProfilePicturePath"
+             class="img-thumbnail rounded-circle"
+             width="80" height="80"
+             style="object-fit:cover; cursor:pointer; display:@(string.IsNullOrEmpty(Model.Input.ProfilePicturePath) ? "none" : "block");"
+             title="Click to crop">
+    </div>
+
+    <!-- Hidden input for Base64 cropped image -->
+    <input type="hidden" id="croppedProfilePicture" name="CroppedProfilePictureBase64" />
+
+    <button type="submit" class="btn btn-primary">Update Profile</button>
+</form>
+
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crop Profile Picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="cropperImage" style="max-width:100%; display:block;">
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="cropButton" class="btn btn-primary">Crop & Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cropper.js -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let cropper;
+    const input = document.getElementById('profilePictureInput');
+    const cropperImage = document.getElementById('cropperImage');
+    const cropModalEl = document.getElementById('cropModal');
+    const cropModal = new bootstrap.Modal(cropModalEl);
+    const cropButton = document.getElementById('cropButton');
+    const preview = document.getElementById('profilePicturePreview');
+    const hiddenInput = document.getElementById('croppedProfilePicture');
+
+    // Open modal when selecting a new file
+    input.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            cropperImage.src = e.target.result;
+
+            cropperImage.onload = function () {
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                    movable: true,
+                    zoomable: true
+                });
+                cropModal.show();
+            };
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Open modal when clicking small preview
+    preview.addEventListener('click', function () {
+        if (!preview.src) return;
+
+        cropperImage.src = preview.src;
+        cropperImage.onload = function () {
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                autoCropArea: 1,
+                movable: true,
+                zoomable: true
+            });
+            cropModal.show();
+        };
+    });
+
+    // Crop & save to hidden input
+    cropButton.addEventListener('click', function () {
+        if (!cropper) return;
+
+        cropper.getCroppedCanvas().toBlob(function (blob) {
+            const reader = new FileReader();
+            reader.onloadend = function () {
+                hiddenInput.value = reader.result; // Base64 string
+                preview.src = reader.result;       // Update preview
+                preview.style.display = 'block';
+                cropModal.hide();
+            };
+            reader.readAsDataURL(blob);
+        }, 'image/png');
+    });
+</script>
