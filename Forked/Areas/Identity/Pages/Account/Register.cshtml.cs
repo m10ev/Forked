@@ -120,7 +120,7 @@ namespace Forked.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                var existingUser = await _userManager.Users.IgnoreQueryFilters().FirstAsync(u => u.Email == Input.Email);
+                var existingUser = await _userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == Input.Email);
 
                 if (existingUser != null)
                 {

@@ -2,17 +2,18 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
 using Forked.Models.Domains;
+using Forked.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 
 namespace Forked.Areas.Identity.Pages.Account.Manage
 {
@@ -124,10 +125,15 @@ namespace Forked.Areas.Identity.Pages.Account.Manage
                     pageHandler: null,
                     values: new { area = "Identity", userId = userId, email = Input.NewEmail, code = code },
                     protocol: Request.Scheme);
-                await _emailSender.SendEmailAsync(
-                    Input.NewEmail,
-                    "Confirm your email",
-                    $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                var templatePath = "Account/email-confirmation.html";
+                var replacements = new Dictionary<string, string>
+                        {
+                            { "{{CONFIRMATION_LINK}}", HtmlEncoder.Default.Encode(callbackUrl) },
+                            { "{{USER_EMAIL}}", Input.NewEmail }
+                        };
+
+                await ((EmailSender)_emailSender).SendTemplateEmailAsync(Input.NewEmail, "Confirm your email", templatePath, replacements);
 
                 StatusMessage = "Confirmation link to change email sent. Please check your email.";
                 return RedirectToPage();

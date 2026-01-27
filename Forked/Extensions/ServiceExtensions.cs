@@ -23,6 +23,7 @@ namespace Forked.Extensions
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
+                options.SignIn.RequireConfirmedEmail = true;
             })
                 .AddEntityFrameworkStores<ForkedDbContext>()
                 .AddDefaultTokenProviders();

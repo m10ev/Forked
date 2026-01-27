@@ -2,18 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Forked.Models.Domains;
+using Forked.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
 
 namespace Forked.Areas.Identity.Pages.Account
 {
@@ -77,10 +78,15 @@ namespace Forked.Areas.Identity.Pages.Account
                 pageHandler: null,
                 values: new { userId = userId, code = code },
                 protocol: Request.Scheme);
-            await _emailSender.SendEmailAsync(
-                Input.Email,
-                "Confirm your email",
-                $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+            var templatePath = "Account/email-confirmation.html";
+            var replacements = new Dictionary<string, string>
+                        {
+                            { "{{CONFIRMATION_LINK}}", HtmlEncoder.Default.Encode(callbackUrl) },
+                            { "{{USER_EMAIL}}", Input.Email }
+                        };
+
+            await ((EmailSender)_emailSender).SendTemplateEmailAsync(Input.Email, "Confirm your email", templatePath, replacements);
 
             ModelState.AddModelError(string.Empty, "Verification email sent. Please check your email.");
             return Page();
