@@ -71,7 +71,7 @@ namespace Forked.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ParentRecipeId")
+                    b.Property<int?>("ParentRecipeId")
                         .HasColumnType("int");
 
                     b.Property<int?>("PreparationTimeInMinutes")
@@ -491,8 +491,7 @@ namespace Forked.Migrations
                     b.HasOne("Forked.Models.Domains.Recipe", "ParentRecipe")
                         .WithMany("Forks")
                         .HasForeignKey("ParentRecipeId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Author");
 

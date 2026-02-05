@@ -1,0 +1,84 @@
+﻿@model Forked.Models.ViewModels.Recipes.CreateRecipeViewModel
+
+@{
+    ViewData["Title"] = "Create Recipe";
+}
+
+<h2>Create Recipe</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @* Anti-forgery token *@
+    @Html.AntiForgeryToken()
+
+    <div>
+        <label asp-for="Title"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="Servings"></label>
+        <input asp-for="Servings" type="number" class="form-control" />
+        <span asp-validation-for="Servings" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="PreparationTimeInMinutes"></label>
+        <input asp-for="PreparationTimeInMinutes" type="number" class="form-control" />
+        <span asp-validation-for="PreparationTimeInMinutes" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="CookingTimeInMinutes"></label>
+        <input asp-for="CookingTimeInMinutes" type="number" class="form-control" />
+        <span asp-validation-for="CookingTimeInMinutes" class="text-danger"></span>
+    </div>
+
+    <div>
+        <label asp-for="ImageFiles">Recipe Images</label>
+        <input asp-for="ImageFiles" type="file" multiple class="form-control" />
+        <span asp-validation-for="ImageFiles" class="text-danger"></span>
+    </div>
+
+    <h3>Ingredients</h3>
+    <div id="ingredients">
+        @for (int i = 0; i < Model.Ingredients.Count; i++)
+        {
+            <div class="ingredient-item mb-2">
+                <input asp-for="Ingredients[@i].Name" placeholder="Ingredient name" class="form-control mb-1" />
+                <input asp-for="Ingredients[@i].Quantity" type="number" placeholder="Quantity" class="form-control mb-1" />
+                <input asp-for="Ingredients[@i].Unit" placeholder="Unit" class="form-control mb-1" />
+                <input asp-for="Ingredients[@i].Preparation" placeholder="Preparation" class="form-control mb-1" />
+                <span asp-validation-for="Ingredients[@i].Name" class="text-danger"></span>
+            </div>
+        }
+    </div>
+
+    <h3>Steps</h3>
+    <div id="steps">
+        @for (int i = 0; i < Model.Steps.Count; i++)
+        {
+            <div class="step-item mb-3">
+                <input asp-for="Steps[@i].StepNumber" type="number" placeholder="Step #" class="form-control mb-1" />
+                <input asp-for="Steps[@i].StepName" placeholder="Step Name" class="form-control mb-1" />
+                <textarea asp-for="Steps[@i].Instruction" placeholder="Instruction" class="form-control mb-1"></textarea>
+                <input asp-for="Steps[@i].ImageFiles" type="file" multiple class="form-control mb-1" />
+                <span asp-validation-for="Steps[@i].Instruction" class="text-danger"></span>
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Create Recipe</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

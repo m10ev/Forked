@@ -1,0 +1,44 @@
+﻿@model List<Forked.Models.ViewModels.Recipes.CreateRecipeViewModel>
+
+@{
+    ViewData["Title"] = "Recipes Index";
+}
+
+<h2>Recipes Index</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Recipe</a>
+</p>
+
+@if (Model.Any())
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Servings</th>
+                <th>Preparation (min)</th>
+                <th>Cooking (min)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>@i</td>
+                    <td>@Model[i].Title</td>
+                    <td>@Model[i].Description</td>
+                    <td>@Model[i].Servings</td>
+                    <td>@Model[i].PreparationTimeInMinutes</td>
+                    <td>@Model[i].CookingTimeInMinutes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No recipes yet.</p>
+}

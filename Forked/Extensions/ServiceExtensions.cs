@@ -1,6 +1,8 @@
 ﻿using Forked.Data;
 using Forked.Models.Domains;
 using Forked.Services;
+using Forked.Services.Interfaces;
+using Forked.Services.Recipes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +34,16 @@ namespace Forked.Extensions
         public static void AddEmailServices(this IServiceCollection services)
         {
             services.AddTransient<IEmailSender, EmailSender>();
+        }
+
+        public static void AddImageServices(this IServiceCollection services)
+        {
+            services.AddTransient<IImageService, ImageService>();
+        }
+
+        public static void AddRecipeServices(this IServiceCollection services)
+        {
+            services.AddTransient<IRecipeService, Services.Recipes.RecipeService>();
         }
     }
 }

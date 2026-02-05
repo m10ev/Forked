@@ -12,7 +12,7 @@ namespace Forked.Models.Domains
         public int Servings { get; set; }
         public string AuthorId { get; set; } = null!;
         public User Author { get; set; } = null!;
-        public int ParentRecipeId { get; set; }
+        public int? ParentRecipeId { get; set; }
         public Recipe? ParentRecipe { get; set; }
         public ICollection<RecipeIngredient> RecipeIngredients { get; set; } = new List<RecipeIngredient>();
         public ICollection<RecipeStep> RecipeSteps { get; set; } = new List<RecipeStep>();

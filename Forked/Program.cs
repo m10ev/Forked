@@ -9,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddIdentityServices();
+builder.Services.AddImageServices();
+builder.Services.AddRecipeServices();
 builder.Services.AddRazorPages();
 builder.Services.AddEmailServices();
 
@@ -35,6 +37,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();
