@@ -101,7 +101,6 @@ namespace Forked.Services.Recipes
                 steps.Add(step);
             }
 
-            // Sort by step number
             return steps.OrderBy(s => s.StepNumber).ToList();
         }
 
