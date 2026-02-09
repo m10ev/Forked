@@ -27,6 +27,21 @@ namespace Forked.Controllers
             return View(_recipes);
         }
 
+        // GET: /Recipes/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var currentUserId = user?.Id;
+
+            var recipe = await _recipeService.GetRecipeDetailAsync(id, currentUserId);
+
+            if (recipe == null)
+                return NotFound();
+
+            return View(recipe);
+        }
+
+
         // GET: /Recipes/Create
         public IActionResult Create()
         {

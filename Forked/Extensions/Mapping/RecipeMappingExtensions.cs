@@ -21,6 +21,75 @@ namespace Forked.Extensions.Mapping
             };
         }
 
+        public static RecipeDetailViewModel ToDetailViewModel(this Recipe recipe, string? currentUserId = null)
+        {
+            return new RecipeDetailViewModel
+            {
+                Id = recipe.Id,
+                Title = recipe.Title,
+                Description = recipe.Description,
+                ImagePaths = recipe.ImagePaths,
+                PreparationTimeInMinutes = recipe.PreparationTimeInMinutes,
+                CookingTimeInMinutes = recipe.CookingTimeInMinutes,
+                Servings = recipe.Servings,
+                CreatedAt = recipe.CreatedAt,
+                UpdatedAt = recipe.UpdatedAt,
+
+                AuthorId = recipe.AuthorId,
+                AuthorName = recipe.Author?.UserName ?? "Unknown",
+                IsAuthor = currentUserId != null && recipe.AuthorId == currentUserId,
+
+                ParentRecipeId = recipe.ParentRecipeId,
+                ParentRecipeTitle = recipe.ParentRecipe?.Title,
+                ParentRecipeAuthorName = recipe.ParentRecipe?.Author?.UserName,
+                ForkCount = recipe.Forks?.Count ?? 0,
+
+                ReviewCount = recipe.Reviews?.Count ?? 0,
+                AverageRating = recipe.Reviews != null && recipe.Reviews.Any()
+                        ? Math.Round(recipe.Reviews.Average(r => r.Rating), 2)
+                        : 0,
+                HasUserReviewed = !string.IsNullOrEmpty(currentUserId) && recipe.Reviews != null && recipe.Reviews.Any(r => r.UserId == currentUserId),
+                UserReviewId = recipe.Reviews?.FirstOrDefault(r => r.UserId == currentUserId)?.Id,
+
+                IsFavourite = !string.IsNullOrEmpty(currentUserId) && (recipe.FavoritedByUsers?.Any(f => f.UserId == currentUserId) ?? false),
+
+                Ingredients = recipe.RecipeIngredients?
+                    .Select(ri => ri.ToViewModel())
+                    .ToList() ?? new(),
+                Steps = recipe.RecipeSteps?
+                    .OrderBy(s => s.StepNumber)
+                    .Select(s => s.ToViewModel())
+                    .ToList() ?? new(),
+                Reviews = recipe.Reviews?
+                    .OrderByDescending(r => r.CreatedAt)
+                    .Select(r => r.ToViewModel(currentUserId))
+                    .ToList() ?? new()
+            };
+        }
+
+        public static RecipeIngredientViewModel ToViewModel(this RecipeIngredient recipeIngredient)
+        {
+            return new RecipeIngredientViewModel
+            {
+                Id = recipeIngredient.Id,
+                Name = recipeIngredient.Ingredient?.Name ?? "Unknown",
+                Quantity = recipeIngredient.Quantity,
+                Unit = recipeIngredient.Unit,
+                Preparation = recipeIngredient.Preparation ?? string.Empty
+            };
+        }
+
+        public static RecipeStepViewModel ToViewModel(this RecipeStep recipeStep)
+        {
+            return new RecipeStepViewModel
+            {
+                Id = recipeStep.Id,
+                StepNumber = recipeStep.StepNumber,
+                StepName = recipeStep.StepName,
+                Instruction = recipeStep.Instruction,
+                ImagePaths = recipeStep.ImagePaths ?? new List<string>()
+            };
+        }
 
         public static async Task<List<RecipeIngredient>> ToRecipeIngredientsAsync(
             this List<CreateRecipeIngredientViewModel> ingredientViewModels,

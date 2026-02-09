@@ -15,7 +15,7 @@ namespace Forked.Models.ViewModels.Recipes
         public double AverageRating { get; set; }
         public int ReviewCount { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
 
         // Author Information
         public string AuthorId { get; set; } = null!;

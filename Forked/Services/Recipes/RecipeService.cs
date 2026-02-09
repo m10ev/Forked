@@ -3,6 +3,7 @@ using Forked.Extensions.Mapping;
 using Forked.Models.Domains;
 using Forked.Models.ViewModels.Recipes;
 using Forked.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Forked.Services.Recipes
 {
@@ -40,9 +41,36 @@ namespace Forked.Services.Recipes
             return recipe;
         }
 
-        public Task DeleteRecipeAsync(int id, string userId)
+        public async Task<RecipeDetailViewModel?> GetRecipeDetailAsync(int id, string? currentUserId)
         {
-            throw new NotImplementedException();
+            var recipe = await _context.Recipes
+                .Include(r => r.Author)
+                .Include(r => r.ParentRecipe)
+                    .ThenInclude(p => p.Author)
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .Include(r => r.RecipeSteps)
+                .Include(r => r.Reviews)
+                    .ThenInclude(rev => rev.User)
+                .Include(r => r.Forks)
+                .Include(r => r.FavoritedByUsers)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            return recipe?.ToDetailViewModel(currentUserId);
+        }
+
+        public async Task DeleteRecipeAsync(int id, string userId)
+        {
+            var recipe = await _context.Recipes.FindAsync(id);
+
+            if (recipe == null)
+                throw new KeyNotFoundException("Recipe not found");
+
+            if (recipe.AuthorId != userId)
+                throw new UnauthorizedAccessException("You can only delete your own recipes");
+
+            _context.Recipes.Remove(recipe);
+            await _context.SaveChangesAsync();
         }
     }
 }
