@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Forked.Models.ViewModels.Users
 {
-    public class UserFollowerCardViewModel
+    public class UserCardViewModel
     {
         public string Id { get; set; } = string.Empty;
         [Display(Name = "Username")]

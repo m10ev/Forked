@@ -2,11 +2,11 @@
 
 namespace Forked.Models.ViewModels.Users
 {
-    public class UserFollowingListViewModel : PagedResultViewModel<UserFollowerCardViewModel>
+    public class UserFollowingListViewModel : PagedResultViewModel<UserCardViewModel>
     {
         public UserFollowingListViewModel() : base() { }
 
-        public UserFollowingListViewModel(IEnumerable<UserFollowerCardViewModel> items, int currentPage, int pageSize, int totalItems) : base(items, currentPage, pageSize, totalItems)
+        public UserFollowingListViewModel(IEnumerable<UserCardViewModel> items, int currentPage, int pageSize, int totalItems) : base(items, currentPage, pageSize, totalItems)
         {
         }
     }
