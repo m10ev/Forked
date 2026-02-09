@@ -31,7 +31,7 @@ namespace Forked.Controllers
         public IActionResult Create()
         {
             var vm = new CreateRecipeViewModel();
-            vm.Ingredients.Add(new RecipeIngredientViewModel());
+            vm.Ingredients.Add(new CreateRecipeIngredientViewModel());
             vm.Steps.Add(new CreateRecipeStepViewModel());
             return View(vm);
         }

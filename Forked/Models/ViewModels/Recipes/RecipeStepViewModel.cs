@@ -8,9 +8,8 @@ namespace Forked.Models.ViewModels.Recipes
         public int StepNumber { get; set; }
         public string? StepName { get; set; }
         public string Instruction { get; set; } = string.Empty;
-        public List<string> ImagePaths { get; set; } = new List<string>();
+        public List<string> ImagePaths { get; set; } = new();
 
-        [BindNever]
         public string DisplayTitle => string.IsNullOrWhiteSpace(StepName)
             ? $"Step {StepNumber}"
             : $"{StepNumber}. {StepName}";

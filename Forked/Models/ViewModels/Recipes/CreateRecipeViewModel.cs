@@ -37,7 +37,7 @@ namespace Forked.Models.ViewModels.Recipes
         [Display(Name = "Ingredients")]
         [Required(ErrorMessage = "At least one ingredient is required")]
         [MinLength(1, ErrorMessage = "At least one ingredient is required")]
-        public List<RecipeIngredientViewModel> Ingredients { get; set; } = new List<RecipeIngredientViewModel>();
+        public List<CreateRecipeIngredientViewModel> Ingredients { get; set; } = new List<CreateRecipeIngredientViewModel>();
 
         [Display(Name = "Recipe Steps")]
         [Required(ErrorMessage = "At least one recipe step is required")]
@@ -63,46 +63,5 @@ namespace Forked.Models.ViewModels.Recipes
         [BindNever]
         public bool HasSteps => Steps != null && Steps.Count > 0 &&
             Steps.Any(s => !string.IsNullOrWhiteSpace(s.Instruction));
-    }
-
-    public class CreateRecipeStepViewModel
-    {
-        [Required(ErrorMessage = "Step number is required")]
-        [Range(1, 100, ErrorMessage = "Step number must be between 1 and 100")]
-        [Display(Name = "Step Number")]
-        public int StepNumber { get; set; }
-
-        [StringLength(100, MinimumLength = 3, ErrorMessage = "Step name must be between 3 and 100 characters")]
-        [Display(Name = "Step Name (optional)")]
-        public string? StepName { get; set; }
-
-        [Required(ErrorMessage = "Step instruction is required")]
-        [StringLength(2000, MinimumLength = 5, ErrorMessage = "Instruction must be between 5 and 2000 characters")]
-        [DataType(DataType.MultilineText)]
-        [Display(Name = "Instruction")]
-        public string Instruction { get; set; } = string.Empty;
-
-        [Display(Name = "Step Images (optional)")]
-        [DataType(DataType.Upload)]
-        public List<IFormFile>? ImageFiles { get; set; }
-
-        [BindNever]
-        public string InstructionPreview
-        {
-            get
-            {
-                if (string.IsNullOrWhiteSpace(Instruction))
-                    return string.Empty;
-
-                return Instruction.Length > 50
-                    ? Instruction.Substring(0, 50) + "..."
-                    : Instruction;
-            }
-        }
-
-        [BindNever]
-        public string DisplayTitle => string.IsNullOrWhiteSpace(StepName)
-            ? $"Step {StepNumber}"
-            : $"{StepNumber}. {StepName}";
     }
 }
