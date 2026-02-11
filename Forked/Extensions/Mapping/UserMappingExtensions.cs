@@ -15,7 +15,7 @@ namespace Forked.Extensions.Mapping
                 ProfilePicturePath = user.ProfilePicturePath,
                 FollowersCount = user.Followers.Count,
                 FollowingCount = user.Following.Count,
-                ForkedCount = ,
+                //ForkedCount = ,
                 RecipeCount = user.Recipes.Count
             };
         }
@@ -31,12 +31,16 @@ namespace Forked.Extensions.Mapping
             };
         }
 
-       /* public static UserFollowersListViewModel ToFollowersListViewModel(this User user)
+        public static UserFollowersListViewModel ToFollowersListModel(this User user, int currentPage, int pageSize)
         {
-            return UserFollowersListViewModel
-            {
+            var followers = user.Followers.Select(f => f.Following).Select(f => f.ToCardViewModel()).ToList();
+            return new UserFollowersListViewModel(followers, currentPage, pageSize, followers.Count);
+        }
 
-            }
-        };*/
+        public static UserFollowingListViewModel ToFollowingListModel (this User user, int currentPage, int pageSize)
+        {
+            var following = user.Following.Select(f => f.Following).Select(f => f.ToCardViewModel()).ToList();
+            return new UserFollowingListViewModel(following, currentPage, pageSize, following.Count);
+        }
     }
 }
