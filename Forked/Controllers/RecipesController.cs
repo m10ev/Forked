@@ -22,10 +22,21 @@ namespace Forked.Controllers
         private static List<CreateRecipeViewModel> _recipes = new();
 
         // GET: /Recipes
-        public IActionResult Index()
+        public async Task<IActionResult> Index(RecipeFilterViewModel filters, RecipeSortOption sortBy = RecipeSortOption.MostPopular, int page = 1, int pageSize = 12)
         {
-            return View(_recipes);
+            var user = await _userManager.GetUserAsync(User);
+            var currentUserId = user?.Id;
+
+            var result = await _recipeService.GetPagedRecipesAsync(
+                filters,
+                sortBy,
+                page,
+                pageSize,
+                currentUserId);
+
+            return View(result);
         }
+
 
         // GET: /Recipes/Details/5
         public async Task<IActionResult> Details(int id)
@@ -71,6 +82,30 @@ namespace Forked.Controllers
             _recipes.Add(vm);
 
             return RedirectToAction("Details", new { id = recipe.Id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                await _recipeService.DeleteRecipeAsync(id, user.Id);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }

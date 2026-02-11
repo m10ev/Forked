@@ -1,44 +1,91 @@
-﻿@model List<Forked.Models.ViewModels.Recipes.CreateRecipeViewModel>
+﻿@model Forked.Models.ViewModels.Recipes.RecipeListViewModel
 
 @{
-    ViewData["Title"] = "Recipes Index";
+    ViewData["Title"] = "Recipes";
 }
 
-<h2>Recipes Index</h2>
+<div class="container my-4">
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New Recipe</a>
-</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Recipes</h2>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Recipe
+        </a>
+    </div>
 
-@if (Model.Any())
-{
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Servings</th>
-                <th>Preparation (min)</th>
-                <th>Cooking (min)</th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (int i = 0; i < Model.Count; i++)
+    @if (Model.Items.Any())
+    {
+        <div class="row">
+            @foreach (var recipe in Model.Items)
             {
-                <tr>
-                    <td>@i</td>
-                    <td>@Model[i].Title</td>
-                    <td>@Model[i].Description</td>
-                    <td>@Model[i].Servings</td>
-                    <td>@Model[i].PreparationTimeInMinutes</td>
-                    <td>@Model[i].CookingTimeInMinutes</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-else
-{
-    <p>No recipes yet.</p>
-}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+
+                        @if (!string.IsNullOrEmpty(recipe.ImagePath))
+                        {
+                            <img src="@recipe.ImagePath"
+                                 class="card-img-top"
+                                 style="height:200px; object-fit:cover;"
+                                 alt="Recipe image" />
+                        }
+
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">@recipe.Title</h5>
+
+                            <p class="card-text text-muted small">
+                                @recipe.Description?.Substring(0,
+                                Math.Min(recipe.Description.Length, 100))...
+                    </p>
+
+                    <div class="mb-2 text-muted small">
+                        <div><i class="bi bi-person"></i> @recipe.AuthorName</div>
+                        <div><i class="bi bi-clock"></i> @recipe.TimeDisplay</div>
+                        <div>
+                            <i class="bi bi-star-fill text-warning"></i>
+                            @recipe.AverageRating (@recipe.ReviewCount)
+                        </div>
+                    </div>
+
+                    <div class="mt-auto">
+                        <a asp-action="Details"
+                           asp-route-id="@recipe.Id"
+                           class="btn btn-outline-primary w-100">
+                            View Recipe
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+                }
+        </div>
+
+        <!-- Pagination -->
+        @if (Model.Paging.TotalPages > 1)
+        {
+            <nav>
+                <ul class="pagination justify-content-center">
+
+                    @foreach (var pageNum in Model.Paging.GetPageRange())
+                    {
+                        <li class="page-item @(pageNum == Model.Paging.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               asp-action="Index"
+                               asp-route-page="@pageNum">
+                                @pageNum
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="alert alert-info">
+            No recipes found.
+        </div>
+    }
+
+</div>

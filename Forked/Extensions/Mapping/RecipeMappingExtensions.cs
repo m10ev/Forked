@@ -8,17 +8,26 @@ namespace Forked.Extensions.Mapping
 {
     public static class RecipeMappingExtensions
     {
-        public static Recipe ToRecipe(this CreateRecipeViewModel viewModel, string userId)
+        public static async Task<Recipe> ToRecipe(this CreateRecipeViewModel viewModel, string userId, IImageService imageService)
         {
-            return new Recipe
+            var recipe = new Recipe
             {
                 Title = viewModel.Title,
                 Description = viewModel.Description,
                 PreparationTimeInMinutes = viewModel.PreparationTimeInMinutes,
                 CookingTimeInMinutes = viewModel.CookingTimeInMinutes,
                 Servings = viewModel.Servings,
-                AuthorId = userId
+                AuthorId = userId,
+                ImagePaths = new()
             };
+
+            foreach (var image in viewModel.ImageFiles)
+            {
+                var path = await imageService.SaveRecipeImageAsync(image);
+                recipe.ImagePaths.Add(path);
+            }
+
+            return recipe;
         }
 
         public static RecipeDetailViewModel ToDetailViewModel(this Recipe recipe, string? currentUserId = null)
@@ -37,7 +46,7 @@ namespace Forked.Extensions.Mapping
 
                 AuthorId = recipe.AuthorId,
                 AuthorName = recipe.Author?.UserName ?? "Unknown",
-                IsAuthor = currentUserId != null && recipe.AuthorId == currentUserId,
+                IsAuthor = currentUserId == recipe.AuthorId,
 
                 ParentRecipeId = recipe.ParentRecipeId,
                 ParentRecipeTitle = recipe.ParentRecipe?.Title,
@@ -46,24 +55,31 @@ namespace Forked.Extensions.Mapping
 
                 ReviewCount = recipe.Reviews?.Count ?? 0,
                 AverageRating = recipe.Reviews != null && recipe.Reviews.Any()
-                        ? Math.Round(recipe.Reviews.Average(r => r.Rating), 2)
-                        : 0,
-                HasUserReviewed = !string.IsNullOrEmpty(currentUserId) && recipe.Reviews != null && recipe.Reviews.Any(r => r.UserId == currentUserId),
-                UserReviewId = recipe.Reviews?.FirstOrDefault(r => r.UserId == currentUserId)?.Id,
+                    ? Math.Round(recipe.Reviews.Average(r => r.Rating), 2)
+                    : 0,
 
-                IsFavourite = !string.IsNullOrEmpty(currentUserId) && (recipe.FavoritedByUsers?.Any(f => f.UserId == currentUserId) ?? false),
+                HasUserReviewed = !string.IsNullOrEmpty(currentUserId) &&
+                                  recipe.Reviews?.Any(r => r.UserId == currentUserId) == true,
 
-                Ingredients = recipe.RecipeIngredients?
+                UserReviewId = recipe.Reviews?
+                    .FirstOrDefault(r => r.UserId == currentUserId)?.Id,
+
+                IsFavourite = !string.IsNullOrEmpty(currentUserId) &&
+                              recipe.FavoritedByUsers?.Any(f => f.UserId == currentUserId) == true,
+
+                Ingredients = recipe.RecipeIngredients
                     .Select(ri => ri.ToViewModel())
-                    .ToList() ?? new(),
-                Steps = recipe.RecipeSteps?
+                    .ToList(),
+
+                Steps = recipe.RecipeSteps
                     .OrderBy(s => s.StepNumber)
                     .Select(s => s.ToViewModel())
-                    .ToList() ?? new(),
-                Reviews = recipe.Reviews?
+                    .ToList(),
+
+                Reviews = recipe.Reviews
                     .OrderByDescending(r => r.CreatedAt)
                     .Select(r => r.ToViewModel(currentUserId))
-                    .ToList() ?? new()
+                    .ToList()
             };
         }
 
@@ -87,7 +103,30 @@ namespace Forked.Extensions.Mapping
                 StepNumber = recipeStep.StepNumber,
                 StepName = recipeStep.StepName,
                 Instruction = recipeStep.Instruction,
-                ImagePaths = recipeStep.ImagePaths ?? new List<string>()
+                ImagePaths = recipeStep.ImagePaths ?? new()
+            };
+        }
+
+        public static RecipeCardViewModel ToCardViewModel(this Recipe recipe, string? currentUserId = null)
+        {
+            return new RecipeCardViewModel
+            {
+                Id = recipe.Id,
+                Title = recipe.Title,
+                Description = recipe.Description,
+                ImagePath = recipe.ImagePaths.FirstOrDefault(),
+                TotalTimeInMinutes = (recipe.PreparationTimeInMinutes ?? 0) + (recipe.CookingTimeInMinutes ?? 0),
+                Servings = recipe.Servings,
+                AuthorName = recipe.Author?.DisplayName ?? "Unknown",
+                AverageRating = recipe.Reviews != null && recipe.Reviews.Any()
+                    ? Math.Round(recipe.Reviews.Average(x => x.Rating), 1)
+                    : 0,
+                ReviewCount = recipe.Reviews?.Count ?? 0,
+                IsForked = recipe.ParentRecipeId != null,
+                IsFavoritedByCurrentUser = !string.IsNullOrEmpty(currentUserId)
+                    && recipe.FavoritedByUsers != null
+                    && recipe.FavoritedByUsers.Any(f => f.UserId == currentUserId),
+                CreatedAt = recipe.CreatedAt
             };
         }
 
@@ -95,38 +134,51 @@ namespace Forked.Extensions.Mapping
             this List<CreateRecipeIngredientViewModel> ingredientViewModels,
             ForkedDbContext context)
         {
-            var ingredientNames = ingredientViewModels
-                .Select(i => i.Name.Trim())
-                .Distinct()
+            var normalized = ingredientViewModels
+                .Select(i => new
+                {
+                    Vm = i,
+                    Name = i.Name.Trim()
+                })
                 .ToList();
 
-            // Get existing ingredients
+            var ingredientNames = normalized
+                .Select(i => i.Name)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
             var existing = await context.Ingredients
                 .Where(i => ingredientNames.Contains(i.Name))
                 .ToListAsync();
 
-            // Create new ingredients that don't exist
-            var newIngredients = ingredientViewModels
-                .Where(i => !existing.Any(e => e.Name.Equals(i.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
-                .Select(i => new Ingredient { Name = i.Name.Trim() })
-                .DistinctBy(i => i.Name)
-                .ToList();
+            var existingDict = existing
+                .ToDictionary(i => i.Name, StringComparer.OrdinalIgnoreCase);
 
-            context.Ingredients.AddRange(newIngredients);
-            await context.SaveChangesAsync();
+            var newIngredients = new List<Ingredient>();
 
-            // Map to RecipeIngredients
-            return ingredientViewModels.Select(i =>
+            foreach (var item in normalized)
             {
-                var ingredient = existing.FirstOrDefault(e => e.Name.Equals(i.Name.Trim(), StringComparison.OrdinalIgnoreCase))
-                                 ?? newIngredients.First(e => e.Name.Equals(i.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (!existingDict.ContainsKey(item.Name))
+                {
+                    var ingredient = new Ingredient { Name = item.Name };
+                    existingDict[item.Name] = ingredient;
+                    newIngredients.Add(ingredient);
+                }
+            }
+
+            if (newIngredients.Any())
+                context.Ingredients.AddRange(newIngredients);
+
+            return normalized.Select(item =>
+            {
+                var ingredient = existingDict[item.Name];
 
                 return new RecipeIngredient
                 {
                     Ingredient = ingredient,
-                    Quantity = i.Quantity,
-                    Unit = i.Unit,
-                    Preparation = i.Preparation
+                    Quantity = item.Vm.Quantity,
+                    Unit = item.Vm.Unit,
+                    Preparation = item.Vm.Preparation
                 };
             }).ToList();
         }
@@ -144,10 +196,10 @@ namespace Forked.Extensions.Mapping
                     StepNumber = stepVm.StepNumber,
                     StepName = stepVm.StepName,
                     Instruction = stepVm.Instruction,
-                    ImagePaths = new List<string>()
+                    ImagePaths = new()
                 };
 
-                if (stepVm.ImageFiles != null && stepVm.ImageFiles.Any())
+                if (stepVm.ImageFiles?.Any() == true)
                 {
                     foreach (var file in stepVm.ImageFiles)
                     {

@@ -20,19 +20,12 @@ namespace Forked.Services.Recipes
 
         public async Task<Recipe> CreateAsync(CreateRecipeViewModel vm, string authorId, int? parentRecipeId = null)
         {
-            Recipe recipe = vm.ToRecipe(authorId);
+            var recipe = await vm.ToRecipe(authorId, _imageService);
 
             if (parentRecipeId.HasValue)
-            {
                 recipe.ParentRecipeId = parentRecipeId.Value;
-            }
 
             recipe.RecipeSteps = await vm.Steps.ToRecipeStepsAsync(_imageService);
-            foreach (var step in recipe.RecipeSteps)
-            {
-                step.Recipe = recipe;
-            }
-
             recipe.RecipeIngredients = await vm.Ingredients.ToRecipeIngredientsAsync(_context);
 
             _context.Recipes.Add(recipe);
@@ -44,6 +37,7 @@ namespace Forked.Services.Recipes
         public async Task<RecipeDetailViewModel?> GetRecipeDetailAsync(int id, string? currentUserId)
         {
             var recipe = await _context.Recipes
+                .AsNoTracking()
                 .Include(r => r.Author)
                 .Include(r => r.ParentRecipe)
                     .ThenInclude(p => p.Author)
@@ -57,6 +51,98 @@ namespace Forked.Services.Recipes
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             return recipe?.ToDetailViewModel(currentUserId);
+        }
+
+        public async Task<RecipeListViewModel> GetPagedRecipesAsync(RecipeFilterViewModel filters, RecipeSortOption sortBy, int page, int pageSize, string? currentUserId)
+        {
+            var query = _context.Recipes
+                .AsNoTracking()
+                .AsQueryable();
+
+            // --- Filters (same as before) ---
+            if (!string.IsNullOrWhiteSpace(filters.SearchTerm))
+            {
+                var search = filters.SearchTerm.Trim().ToLower();
+                query = query.Where(r =>
+                    r.Title.ToLower().Contains(search) ||
+                    r.Description.ToLower().Contains(search));
+            }
+
+            if (filters.MaxPreparationTime.HasValue)
+                query = query.Where(r =>
+                    r.PreparationTimeInMinutes <= filters.MaxPreparationTime);
+
+            if (filters.MaxCookingTime.HasValue)
+                query = query.Where(r =>
+                    r.CookingTimeInMinutes <= filters.MaxCookingTime);
+
+            if (filters.MinServings.HasValue)
+                query = query.Where(r =>
+                    r.Servings >= filters.MinServings);
+
+            if (filters.MaxServings.HasValue)
+                query = query.Where(r =>
+                    r.Servings <= filters.MaxServings);
+
+            if (!string.IsNullOrWhiteSpace(filters.AuthorId))
+                query = query.Where(r => r.AuthorId == filters.AuthorId);
+
+            if (filters.OnlyForked)
+                query = query.Where(r => r.ParentRecipeId != null);
+
+            if (filters.OnlyOriginals)
+                query = query.Where(r => r.ParentRecipeId == null);
+
+            if (filters.OnlyFavourites && !string.IsNullOrEmpty(currentUserId))
+            {
+                query = query.Where(r =>
+                    r.FavoritedByUsers.Any(f => f.UserId == currentUserId));
+            }
+
+            if (filters.MinimumRating.HasValue)
+            {
+                query = query.Where(r =>
+                    r.Reviews.Any() &&
+                    r.Reviews.Average(x => x.Rating) >= filters.MinimumRating);
+            }
+
+            // --- Sorting ---
+            query = sortBy switch
+            {
+                RecipeSortOption.Newest => query.OrderByDescending(r => r.CreatedAt),
+                RecipeSortOption.Oldest => query.OrderBy(r => r.CreatedAt),
+                RecipeSortOption.HighestRated => query.OrderByDescending(r =>
+                    r.Reviews.Any() ? r.Reviews.Average(x => x.Rating) : 0),
+                RecipeSortOption.Alphabetical => query.OrderBy(r => r.Title),
+                RecipeSortOption.Quickest => query.OrderBy(r =>
+                    (r.PreparationTimeInMinutes ?? 0) + (r.CookingTimeInMinutes ?? 0)),
+                RecipeSortOption.MostForked => query.OrderByDescending(r => r.Forks.Count),
+                _ => query.OrderByDescending(r => r.Reviews.Count)
+            };
+
+            // --- Total Count ---
+            var totalItems = await query.CountAsync();
+
+            // --- Paging and mapping using mapper ---
+            var recipes = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => r) // keep it as Recipe for mapping
+                .Include(r => r.Author)
+                .Include(r => r.Reviews)
+                .Include(r => r.FavoritedByUsers)
+                .Include(r => r.Forks)
+                .ToListAsync();
+
+            var mapped = recipes
+                .Select(r => r.ToCardViewModel(currentUserId))
+                .ToList();
+
+            return new RecipeListViewModel(mapped, page, pageSize, totalItems)
+            {
+                Filters = filters,
+                SortBy = sortBy
+            };
         }
 
         public async Task DeleteRecipeAsync(int id, string userId)

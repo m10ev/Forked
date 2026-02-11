@@ -363,3 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 /Forked/appsettings.Development.json
 /Forked/Migrations/
+
+/Forked/wwwroot/images/profiles/
+/Forked/wwwroot/images/recipes/
+/Forked/wwwroot/images/reviews/
+/Forked/wwwroot/images/steps/
