@@ -364,7 +364,7 @@ FodyWeavers.xsd
 /Forked/appsettings.Development.json
 /Forked/Migrations/
 
-wwwroot/images/profiles/
-wwwroot/images/recipes/
-wwwroot/images/reviews/
-wwwroot/images/steps/
+/Forked/wwwroot/images/profiles/
+/Forked/wwwroot/images/recipes/
+/Forked/wwwroot/images/reviews/
+/Forked/wwwroot/images/steps/

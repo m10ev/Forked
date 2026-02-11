@@ -7,6 +7,7 @@ namespace Forked.Services.Recipes
     {
         Task<Recipe> CreateAsync(CreateRecipeViewModel vm, string authorId, int? parentRecipeId = null);
         Task<RecipeDetailViewModel?> GetRecipeDetailAsync(int id, string? currentUserId);
+        Task<RecipeListViewModel> GetPagedRecipesAsync(RecipeFilterViewModel filters, RecipeSortOption sortBy, int page, int pageSize, string? currentUserId);
         Task DeleteRecipeAsync(int id, string userId);
     }
 }
