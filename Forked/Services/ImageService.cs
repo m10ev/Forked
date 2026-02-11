@@ -9,6 +9,7 @@ namespace Forked.Services
         private const string ImageRoot = "images";
         private const string RecipeFolder = "images/recipes";
         private const string StepFolder = "images/steps";
+        private const string ReviewFolder = "images/reviews";
 
         public ImageService(IWebHostEnvironment env)
         {
@@ -16,10 +17,13 @@ namespace Forked.Services
         }
 
         public Task<string> SaveRecipeImageAsync(IFormFile file)
-       => SaveAsync(file, RecipeFolder);
+            => SaveAsync(file, RecipeFolder);
 
         public Task<string> SaveStepImageAsync(IFormFile file)
             => SaveAsync(file, StepFolder);
+
+        public Task<string> SaveReviewImageAsync(IFormFile file)
+            => SaveAsync(file, ReviewFolder);
 
         private async Task<string> SaveAsync(IFormFile file, string relativeFolder)
         {

@@ -26,6 +26,7 @@
   <ItemGroup>
     <Folder Include="EmailTemplates\Notifications\" />
     <Folder Include="Migrations\" />
+    <Folder Include="wwwroot\images\reviews\" />
     <Folder Include="wwwroot\images\steps\" />
     <Folder Include="wwwroot\images\recipes\" />
     <Folder Include="wwwroot\images\profiles\" />

@@ -19,7 +19,7 @@ namespace Forked.Models.ViewModels.Recipes
 
         [Display(Name = "Recipe Images")]
         [DataType(DataType.Upload)]
-        public List<IFormFile>? ImageFiles { get; set; } = new List<IFormFile>();
+        public List<IFormFile> ImageFiles { get; set; } = new();
 
         [Display(Name = "Preparation Time (minutes)")]
         [Range(1, 1440, ErrorMessage = "Preparation time must be between 1 and 1440 minutes")]

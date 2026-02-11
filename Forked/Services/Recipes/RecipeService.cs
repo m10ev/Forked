@@ -20,7 +20,7 @@ namespace Forked.Services.Recipes
 
         public async Task<Recipe> CreateAsync(CreateRecipeViewModel vm, string authorId, int? parentRecipeId = null)
         {
-            Recipe recipe = vm.ToRecipe(authorId);
+            Recipe recipe = await vm.ToRecipe(authorId, _imageService);
 
             if (parentRecipeId.HasValue)
             {

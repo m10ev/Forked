@@ -1,4 +1,8 @@
-﻿using Forked.Models.ViewModels.Reviews;
+﻿using Forked.Models.Domains;
+using Forked.Models.ViewModels.Reviews;
+using Forked.Services;
+using Forked.Services.Interfaces;
+using System.Threading.Tasks;
 
 namespace Forked.Extensions.Mapping
 {
@@ -18,6 +22,29 @@ namespace Forked.Extensions.Mapping
                 UpdatedAt = review.UpdatedAt,
                 IsCurrentUser =  !string.IsNullOrEmpty(currentUserId) && review.UserId == currentUserId
             };
+        }
+
+        public static async Task<Review> ToReview(this CreateReviewViewModel viewModel, string userId, IImageService imageService)
+        {
+            var review = new Review
+            {
+                UserId = userId,
+                Rating = viewModel.Rating,
+                Message = viewModel.Message,
+                ImagePaths = new List<string>()
+            };
+
+            // Handle image uploads and populate ImagePaths
+            if (viewModel.Images != null)
+            {
+                foreach (var image in viewModel.Images)
+                {
+                    var path = await imageService.SaveReviewImageAsync(image);
+                    review.ImagePaths.Add(path);
+                }
+            }
+
+            return review;
         }
     }
 }

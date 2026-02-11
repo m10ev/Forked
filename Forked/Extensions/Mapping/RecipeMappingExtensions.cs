@@ -3,22 +3,32 @@ using Forked.Models.Domains;
 using Forked.Models.ViewModels.Recipes;
 using Forked.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace Forked.Extensions.Mapping
 {
     public static class RecipeMappingExtensions
     {
-        public static Recipe ToRecipe(this CreateRecipeViewModel viewModel, string userId)
+        public static async Task<Recipe> ToRecipe(this CreateRecipeViewModel viewModel, string userId, IImageService imageService)
         {
-            return new Recipe
+            var recipe = new Recipe
             {
                 Title = viewModel.Title,
                 Description = viewModel.Description,
                 PreparationTimeInMinutes = viewModel.PreparationTimeInMinutes,
                 CookingTimeInMinutes = viewModel.CookingTimeInMinutes,
                 Servings = viewModel.Servings,
-                AuthorId = userId
+                AuthorId = userId,
+                ImagePaths = new List<string>()
             };
+
+            foreach (var image in viewModel.ImageFiles)
+            {
+                var path = await imageService.SaveRecipeImageAsync(image);
+                recipe.ImagePaths.Add(path);
+            }
+
+            return recipe;
         }
 
         public static RecipeDetailViewModel ToDetailViewModel(this Recipe recipe, string? currentUserId = null)
