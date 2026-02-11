@@ -15,7 +15,7 @@ namespace Forked.Extensions.Mapping
                 ProfilePicturePath = user.ProfilePicturePath,
                 FollowersCount = user.Followers.Count,
                 FollowingCount = user.Following.Count,
-                ForkedCount = ,
+                //ForkedCount = user., ??
                 RecipeCount = user.Recipes.Count
             };
         }
