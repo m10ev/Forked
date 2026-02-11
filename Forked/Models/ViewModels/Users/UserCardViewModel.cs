@@ -9,7 +9,7 @@ namespace Forked.Models.ViewModels.Users
         [Display(Name = "Username")]
         public string DisplayName { get; set; } = string.Empty;
         [Display(Name = "Bio")]
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         public string? ProfilePicturePath { get; set; }
 
     }
