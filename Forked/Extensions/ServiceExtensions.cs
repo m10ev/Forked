@@ -5,6 +5,7 @@ using Forked.Services.Ingredients;
 using Forked.Services.Interfaces;
 using Forked.Services.Recipes;
 using Forked.Services.UserFavoriteRecipes;
+using Forked.Services.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -57,5 +58,9 @@ namespace Forked.Extensions
         {
             services.AddTransient<IFavoriteService, FavoriteService>();
         }
-    }
+
+        public static void AddUserServices(this IServiceCollection services)
+        {
+            services.AddTransient<IUserService, UserService>();
+        }
 }
