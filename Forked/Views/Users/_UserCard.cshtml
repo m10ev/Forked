@@ -1,0 +1,20 @@
+﻿@model Forked.Models.ViewModels.Users.UserCardViewModel
+
+<div class="card shadow-sm">
+    <div class="card-body d-flex gap-3 align-items-center">
+
+        <img src="@Model.ProfilePicturePath"
+             class="rounded-circle"
+             style="width:60px;height:60px;object-fit:cover;" />
+
+        <div>
+            <h5 class="card-title mb-1">@Model.DisplayName</h5>
+            <p class="text-muted mb-2">@Model.Description</p>
+
+            <a asp-controller="User" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                View Profile
+            </a>
+        </div>
+
+    </div>
+</div>
