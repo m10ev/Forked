@@ -120,6 +120,16 @@ namespace Forked.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                var existingDisplayName = await _userManager.Users
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.DisplayName == Input.DisplayName);
+
+                if (existingDisplayName != null)
+                {
+                    ModelState.AddModelError("Input.DisplayName", "Username already taken.");
+                    return Page();
+                }
+
                 var existingUser = await _userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == Input.Email);
 
                 if (existingUser != null)
@@ -190,6 +200,8 @@ namespace Forked.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    await _userManager.AddToRoleAsync(user, "User");
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);

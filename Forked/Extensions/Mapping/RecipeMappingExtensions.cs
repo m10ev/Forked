@@ -49,12 +49,12 @@ namespace Forked.Extensions.Mapping
                 UpdatedAt = recipe.UpdatedAt,
 
                 AuthorId = recipe.AuthorId,
-                AuthorName = recipe.Author?.UserName ?? "Unknown",
+                AuthorName = recipe.Author?.DisplayName ?? "Unknown",
                 IsAuthor = currentUserId == recipe.AuthorId,
 
                 ParentRecipeId = recipe.ParentRecipeId,
                 ParentRecipeTitle = recipe.ParentRecipe?.Title,
-                ParentRecipeAuthorName = recipe.ParentRecipe?.Author?.UserName,
+                ParentRecipeAuthorName = recipe.ParentRecipe?.Author?.DisplayName,
                 ForkCount = recipe.Forks?.Count ?? 0,
 
                 ReviewCount = recipe.Reviews?.Count ?? 0,

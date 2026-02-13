@@ -100,8 +100,10 @@ namespace Forked.Services.Recipes
                 query = query.Where(r =>
                     r.Servings <= filters.MaxServings);
 
-            if (!string.IsNullOrWhiteSpace(filters.AuthorId))
-                query = query.Where(r => r.AuthorId == filters.AuthorId);
+            if (!string.IsNullOrEmpty(filters.AuthorName))
+            {
+                query = query.Include(r => r.Author).Where(r => r.Author.DisplayName == filters.AuthorName);
+            }
 
             if (filters.OnlyForked)
                 query = query.Where(r => r.ParentRecipeId != null);
@@ -113,6 +115,11 @@ namespace Forked.Services.Recipes
             {
                 query = query.Where(r =>
                     r.FavoritedByUsers.Any(f => f.UserId == currentUserId));
+            }
+
+            if (filters.OnlyMyRecipes && !string.IsNullOrEmpty(currentUserId))
+            {
+                query = query.Where(r => r.AuthorId == currentUserId);
             }
 
             if (filters.MinimumRating.HasValue)
@@ -161,14 +168,15 @@ namespace Forked.Services.Recipes
             };
         }
 
-        public async Task DeleteRecipeAsync(int id, string userId)
+        public async Task DeleteRecipeAsync(int id, string userId, bool isAdmin)
         {
             var recipe = await _context.Recipes.FindAsync(id);
 
             if (recipe == null)
                 throw new KeyNotFoundException("Recipe not found");
 
-            if (recipe.AuthorId != userId)
+            // Allow deletion if the user is the author or an admin
+            if (recipe.AuthorId != userId && !isAdmin)
                 throw new UnauthorizedAccessException("You can only delete your own recipes");
 
             _context.Recipes.Remove(recipe);
