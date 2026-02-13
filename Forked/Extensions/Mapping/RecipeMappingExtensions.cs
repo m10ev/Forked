@@ -3,6 +3,7 @@ using Forked.Models.Domains;
 using Forked.Models.ViewModels.Recipes;
 using Forked.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Forked.Extensions.Mapping
 {
@@ -21,10 +22,13 @@ namespace Forked.Extensions.Mapping
                 ImagePaths = new()
             };
 
-            foreach (var image in viewModel.ImageFiles)
+            if (viewModel.ImageFiles?.Any() == true)
             {
-                var path = await imageService.SaveRecipeImageAsync(image);
-                recipe.ImagePaths.Add(path);
+                foreach (var image in viewModel.ImageFiles)
+                {
+                    var path = await imageService.SaveRecipeImageAsync(image);
+                    recipe.ImagePaths.Add(path);
+                }
             }
 
             return recipe;
@@ -131,56 +135,52 @@ namespace Forked.Extensions.Mapping
         }
 
         public static async Task<List<RecipeIngredient>> ToRecipeIngredientsAsync(
-            this List<CreateRecipeIngredientViewModel> ingredientViewModels,
-            ForkedDbContext context)
+                this List<ParsedIngredientViewModel> parsedIngredients,
+                ForkedDbContext context)
         {
-            var normalized = ingredientViewModels
-                .Select(i => new
-                {
-                    Vm = i,
-                    Name = i.Name.Trim()
-                })
+            var normalizedNames = parsedIngredients
+                .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+                .Select(i => i.Name.Trim().ToLower())
+                .Distinct()
                 .ToList();
 
-            var ingredientNames = normalized
-                .Select(i => i.Name)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            var existing = await context.Ingredients
-                .Where(i => ingredientNames.Contains(i.Name))
+            var existingIngredients = await context.Ingredients
+                .Where(i => normalizedNames.Contains(i.Name.ToLower()))
                 .ToListAsync();
 
-            var existingDict = existing
-                .ToDictionary(i => i.Name, StringComparer.OrdinalIgnoreCase);
+            var ingredientDict = existingIngredients
+                .ToDictionary(i => i.Name.ToLower(), i => i);
 
-            var newIngredients = new List<Ingredient>();
+            var recipeIngredients = new List<RecipeIngredient>();
 
-            foreach (var item in normalized)
+            foreach (var parsed in parsedIngredients)
             {
-                if (!existingDict.ContainsKey(item.Name))
+                if (string.IsNullOrWhiteSpace(parsed.Name))
+                    continue;
+
+                var normalized = parsed.Name.Trim().ToLower();
+
+                if (!ingredientDict.TryGetValue(normalized, out var ingredientEntity))
                 {
-                    var ingredient = new Ingredient { Name = item.Name };
-                    existingDict[item.Name] = ingredient;
-                    newIngredients.Add(ingredient);
+                    ingredientEntity = new Ingredient
+                    {
+                        Name = CultureInfo.CurrentCulture.TextInfo
+                            .ToTitleCase(parsed.Name.Trim().ToLower())
+                    };
+                    context.Ingredients.Add(ingredientEntity);
+                    ingredientDict[normalized] = ingredientEntity;
                 }
+
+                recipeIngredients.Add(new RecipeIngredient
+                {
+                    Ingredient = ingredientEntity,
+                    Quantity = parsed.Quantity,
+                    Unit = parsed.Unit ?? string.Empty,
+                    Preparation = parsed.Preparation ?? string.Empty
+                });
             }
 
-            if (newIngredients.Any())
-                context.Ingredients.AddRange(newIngredients);
-
-            return normalized.Select(item =>
-            {
-                var ingredient = existingDict[item.Name];
-
-                return new RecipeIngredient
-                {
-                    Ingredient = ingredient,
-                    Quantity = item.Vm.Quantity,
-                    Unit = item.Vm.Unit,
-                    Preparation = item.Vm.Preparation
-                };
-            }).ToList();
+            return recipeIngredients;
         }
 
         public static async Task<List<RecipeStep>> ToRecipeStepsAsync(

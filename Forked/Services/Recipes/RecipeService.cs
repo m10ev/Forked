@@ -4,6 +4,7 @@ using Forked.Models.Domains;
 using Forked.Models.ViewModels.Recipes;
 using Forked.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace Forked.Services.Recipes
 {
@@ -18,21 +19,36 @@ namespace Forked.Services.Recipes
             _imageService = imageService;
         }
 
-        public async Task<Recipe> CreateAsync(CreateRecipeViewModel vm, string authorId, int? parentRecipeId = null)
+        public async Task<Recipe> CreateAsync(
+            CreateRecipeViewModel vm,
+            string authorId,
+            int? parentRecipeId = null)
         {
+            if (vm == null)
+                throw new ArgumentNullException(nameof(vm));
+
+            if (vm.ParsedIngredients == null || !vm.ParsedIngredients.Any())
+                throw new ArgumentException("Recipe must contain at least one ingredient.");
+
+            // 1️⃣ Create the base recipe entity
             var recipe = await vm.ToRecipe(authorId, _imageService);
 
             if (parentRecipeId.HasValue)
                 recipe.ParentRecipeId = parentRecipeId.Value;
 
+            // 2️⃣ Map recipe steps
             recipe.RecipeSteps = await vm.Steps.ToRecipeStepsAsync(_imageService);
-            recipe.RecipeIngredients = await vm.Ingredients.ToRecipeIngredientsAsync(_context);
 
+            // 3️⃣ Map parsed ingredients to domain
+            recipe.RecipeIngredients = await vm.ParsedIngredients.ToRecipeIngredientsAsync(_context);
+
+            // 4️⃣ Add recipe to context and save
             _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
 
             return recipe;
         }
+
 
         public async Task<RecipeDetailViewModel?> GetRecipeDetailAsync(int id, string? currentUserId)
         {

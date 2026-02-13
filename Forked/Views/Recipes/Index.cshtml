@@ -1,82 +1,201 @@
 ﻿@model Forked.Models.ViewModels.Recipes.RecipeListViewModel
-
 @{
     ViewData["Title"] = "Recipes";
 }
 
-<div class="container my-4">
+<div class="my-4">
 
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Recipes</h2>
+        <div>
+            <h2 class="mb-0">Recipes</h2>
+            @if (Model.Filters.HasActiveFilters())
+            {
+                <small class="text-muted">@Model.Paging.TotalItems result@(Model.Paging.TotalItems != 1 ? "s" : "") found</small>
+            }
+        </div>
         <a asp-action="Create" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Create Recipe
         </a>
     </div>
 
-    @if (Model.Items.Any())
-    {
-        <div class="row">
-            @foreach (var recipe in Model.Items)
-            {
-                <div class="col-md-4 mb-4">
-                    <div class="card h-100 shadow-sm">
+    <!-- Search & Filter -->
+    <form asp-action="Index" method="get" class="mb-4">
 
-                        @if (!string.IsNullOrEmpty(recipe.ImagePath))
-                        {
-                            <img src="@recipe.ImagePath"
-                                 class="card-img-top"
-                                 style="height:200px; object-fit:cover;"
-                                 alt="Recipe image" />
-                        }
-
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">@recipe.Title</h5>
-
-                            <p class="card-text text-muted small">
-                                @recipe.Description?.Substring(0,
-                                Math.Min(recipe.Description.Length, 100))...
-                    </p>
-
-                    <div class="mb-2 text-muted small">
-                        <div><i class="bi bi-person"></i> @recipe.AuthorName</div>
-                        <div><i class="bi bi-clock"></i> @recipe.TimeDisplay</div>
-                        <div>
-                            <i class="bi bi-star-fill text-warning"></i>
-                            @recipe.AverageRating (@recipe.ReviewCount)
-                        </div>
-                    </div>
-
-                    <div class="mt-auto">
-                        <a asp-action="Details"
-                           asp-route-id="@recipe.Id"
-                           class="btn btn-outline-primary w-100">
-                            View Recipe
-                        </a>
-                    </div>
-                </div>
-
+        <div class="search-bar mb-3">
+            <div class="input-group input-group-lg">
+                <span class="input-group-text search-bar__icon">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input type="text"
+                       name="SearchTerm"
+                       value="@Model.Filters.SearchTerm"
+                       class="form-control search-bar__input"
+                       placeholder="Search by title or description…" />
+                <button type="submit" class="btn btn-primary px-4">Search</button>
             </div>
         </div>
-                }
+
+        <div class="filter-row">
+
+            <div class="filter-chip">
+                <label class="filter-chip__label">Max Prep</label>
+                <input type="number" name="MaxPreparationTime"
+                       value="@Model.Filters.MaxPreparationTime"
+                       class="form-control filter-chip__input"
+                       placeholder="mins" min="1" max="2880" />
+            </div>
+
+            <div class="filter-chip">
+                <label class="filter-chip__label">Max Cook</label>
+                <input type="number" name="MaxCookingTime"
+                       value="@Model.Filters.MaxCookingTime"
+                       class="form-control filter-chip__input"
+                       placeholder="mins" min="1" max="1440" />
+            </div>
+
+            <div class="filter-chip">
+                <label class="filter-chip__label">Min Rating</label>
+                <select name="MinimumRating" class="form-select filter-chip__input">
+                    <option value="">Any</option>
+                    <option value="3" selected="@(Model.Filters.MinimumRating == 3)">3+ ⭐</option>
+                    <option value="4" selected="@(Model.Filters.MinimumRating == 4)">4+ ⭐</option>
+                    <option value="4.5" selected="@(Model.Filters.MinimumRating == 4.5)">4.5+ ⭐</option>
+                </select>
+            </div>
+
+            <div class="filter-chip">
+                <label class="filter-chip__label">Sort by</label>
+                <select name="sortBy" id="sortBySelect" class="form-select filter-chip__input">
+                    <option value="MostPopular" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.MostPopular)">Most Popular</option>
+                    <option value="Newest" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.Newest)">Newest</option>
+                    <option value="HighestRated" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.HighestRated)">Highest Rated</option>
+                    <option value="Quickest" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.Quickest)">Quickest</option>
+                    <option value="MostForked" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.MostForked)">Most Forked</option>
+                    <option value="Alphabetical" selected="@(Model.SortBy == Forked.Models.ViewModels.Recipes.RecipeSortOption.Alphabetical)">A–Z</option>
+                </select>
+            </div>
+
+            <div class="filter-chip filter-chip--toggles">
+                <label class="filter-chip__label">Show only</label>
+                <div class="filter-toggles">
+                    <label class="filter-toggle">
+                        <input type="checkbox" name="OnlyFavourites" value="true" @(Model.Filters.OnlyFavourites ? "checked" : "") />
+                        <span>❤️ Favourites</span>
+                    </label>
+                    <label class="filter-toggle">
+                        <input type="checkbox" name="OnlyForked" value="true" @(Model.Filters.OnlyForked ? "checked" : "") />
+                        <span>🍴 Forked</span>
+                    </label>
+                    <label class="filter-toggle">
+                        <input type="checkbox" name="OnlyOriginals" value="true" @(Model.Filters.OnlyOriginals ? "checked" : "") />
+                        <span>✨ Originals</span>
+                    </label>
+                </div>
+            </div>
+
+            @if (Model.Filters.HasActiveFilters())
+            {
+                <div class="filter-chip filter-chip--clear">
+                    <label class="filter-chip__label">&nbsp;</label>
+                    <a asp-action="Index" class="btn btn-outline-secondary filter-chip__input">
+                        <i class="bi bi-x-lg"></i> Clear
+                    </a>
+                </div>
+            }
+
+        </div>
+    </form>
+
+    <!-- Quick links -->
+    <div class="quick-links mb-4">
+        <span class="quick-links__label">Quick:</span>
+        <a href="/Recipes?sortBy=Newest" class="quick-link">New this week</a>
+        <a href="/Recipes?sortBy=Quickest&MaxCookingTime=30&MaxPreparationTime=30" class="quick-link">Under 30 min</a>
+        <a href="/Recipes?sortBy=HighestRated&MinimumRating=4" class="quick-link">Top rated</a>
+        <a href="/Recipes?sortBy=MostForked" class="quick-link">Most forked</a>
+    </div>
+
+    <!-- Cards grid -->
+    @if (Model.Items.Any())
+    {
+        <div class="row g-4">
+            @foreach (var recipe in Model.Items)
+            {
+                <div class="col-md-4 col-sm-6">
+                    <a asp-action="Details" asp-route-id="@recipe.Id" class="recipe-card-link">
+                        <div class="rcard">
+                            <!-- Image -->
+                            <div class="rcard__img-wrap">
+                                @if (!string.IsNullOrEmpty(recipe.ImagePath))
+                                {
+                                    <img src="@recipe.ImagePath" class="rcard__img" alt="@recipe.Title" />
+                                }
+                                else
+                                {
+                                    <div class="rcard__img rcard__img--placeholder">
+                                        <span>🍽️</span>
+                                    </div>
+                                }
+                                @if (recipe.IsForked)
+                                {
+                                    <span class="rcard__badge rcard__badge--forked">🍴 Forked</span>
+                                }
+                                else
+                                {
+                                    <span class="rcard__badge rcard__badge--original">✨ Original</span>
+                                }
+                            </div>
+
+                            <!-- Body -->
+                            <div class="rcard__body">
+                                <p class="rcard__author">@recipe.AuthorName</p>
+                                <h5 class="rcard__title">@recipe.Title</h5>
+                                <p class="rcard__desc">
+                                    @(recipe.Description?.Length > 90
+                                                                ? recipe.Description.Substring(0, 90) + "…"
+                                                                : recipe.Description)
+                                </p>
+
+                                <div class="rcard__meta">
+                                    <span class="rcard__meta-item">
+                                        <i class="bi bi-clock"></i> @recipe.TimeDisplay
+                                    </span>
+                                    <span class="rcard__meta-item">
+                                        <i class="bi bi-people"></i> @recipe.Servings
+                                    </span>
+                                    <span class="rcard__meta-item rcard__meta-item--rating">
+                                        ⭐ @recipe.AverageRating.ToString("F1")
+                                        <span class="rcard__review-count">(@recipe.ReviewCount)</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            }
         </div>
 
         <!-- Pagination -->
         @if (Model.Paging.TotalPages > 1)
         {
-            <nav>
+            <nav class="mt-5">
                 <ul class="pagination justify-content-center">
-
                     @foreach (var pageNum in Model.Paging.GetPageRange())
                     {
                         <li class="page-item @(pageNum == Model.Paging.CurrentPage ? "active" : "")">
                             <a class="page-link"
                                asp-action="Index"
-                               asp-route-page="@pageNum">
+                               asp-route-page="@pageNum"
+                               asp-route-SearchTerm="@Model.Filters.SearchTerm"
+                               asp-route-MaxPreparationTime="@Model.Filters.MaxPreparationTime"
+                               asp-route-MaxCookingTime="@Model.Filters.MaxCookingTime"
+                               asp-route-MinimumRating="@Model.Filters.MinimumRating"
+                               asp-route-sortBy="@Model.SortBy">
                                 @pageNum
                             </a>
                         </li>
                     }
-
                 </ul>
             </nav>
         }
@@ -85,7 +204,317 @@
     {
         <div class="alert alert-info">
             No recipes found.
+            @if (Model.Filters.HasActiveFilters())
+            {
+                <a asp-action="Index" class="alert-link ms-1">Clear filters</a>
+            }
         </div>
     }
-
 </div>
+
+@section Scripts {
+    <script>
+        document.getElementById('sortBySelect')?.addEventListener('change', function () {
+            this.closest('form').submit();
+        });
+    </script>
+}
+
+<style>
+    /* =======================================
+       RECIPE CARD
+    ======================================= */
+    .recipe-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .rcard {
+        background: #fff;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border: 1px solid #e0dbd5;
+        transition: transform 220ms ease, box-shadow 220ms ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .rcard:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+        }
+
+    .rcard__img-wrap {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .rcard__img {
+        width: 100%;
+        height: 190px;
+        object-fit: cover;
+        display: block;
+        transition: transform 300ms ease;
+    }
+
+    .rcard:hover .rcard__img {
+        transform: scale(1.04);
+    }
+
+    .rcard__img--placeholder {
+        height: 190px;
+        background: #f4f0eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+
+    .rcard__badge {
+        position: absolute;
+        top: 0.65rem;
+        left: 0.65rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 0.2rem 0.6rem;
+        border-radius: 100px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        backdrop-filter: blur(4px);
+    }
+
+    .rcard__badge--forked {
+        background: rgba(232,90,42,0.9);
+        color: #fff;
+    }
+
+    .rcard__badge--original {
+        background: rgba(61,90,71,0.88);
+        color: #fff;
+    }
+
+    .rcard__body {
+        padding: 1rem 1.1rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .rcard__author {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #e85a2a;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0 0 0.3rem;
+    }
+
+    .rcard__title {
+        font-size: 1rem;
+        font-weight: 800;
+        color: #1e1e1e;
+        margin: 0 0 0.4rem;
+        line-height: 1.3;
+    }
+
+    .rcard__desc {
+        font-size: 0.82rem;
+        color: #7a7a7a;
+        line-height: 1.55;
+        margin: 0 0 auto;
+        padding-bottom: 0.75rem;
+    }
+
+    .rcard__meta {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+        padding-top: 0.65rem;
+        border-top: 1px solid #f0ebe4;
+        margin-top: 0.65rem;
+    }
+
+    .rcard__meta-item {
+        font-size: 0.78rem;
+        color: #7a7a7a;
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .rcard__meta-item--rating {
+        margin-left: auto;
+        font-weight: 700;
+        color: #1e1e1e;
+    }
+
+    .rcard__review-count {
+        font-weight: 400;
+        color: #7a7a7a;
+    }
+
+    /* =======================================
+       SEARCH + FILTER (shared with home)
+    ======================================= */
+    .search-bar__icon {
+        background: #faf8f5;
+        border-right: none;
+        color: #7a7a7a;
+    }
+
+    .search-bar__input {
+        border-left: none;
+    }
+
+        .search-bar__input:focus {
+            border-left: none;
+            box-shadow: none;
+            border-color: #e0dbd5;
+        }
+
+    .search-bar .input-group:focus-within {
+        box-shadow: 0 0 0 3px rgba(232,90,42,0.18);
+        border-radius: 0.5rem;
+    }
+
+    .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: flex-end;
+        background: #f4f0eb;
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+    }
+
+    .filter-chip {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .filter-chip__label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #7a7a7a;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 0;
+    }
+
+    .filter-chip__input {
+        min-width: 110px;
+        font-size: 0.875rem;
+        padding: 0.4rem 0.65rem;
+        height: auto;
+    }
+
+    .filter-chip--toggles {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-chip--clear .filter-chip__input {
+        min-width: auto;
+    }
+
+    .filter-toggles {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: #fff;
+        border: 1.5px solid #e0dbd5;
+        border-radius: 100px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 200ms ease;
+        user-select: none;
+        white-space: nowrap;
+    }
+
+        .filter-toggle:hover {
+            border-color: #e85a2a;
+            background: rgba(232,90,42,0.05);
+        }
+
+        .filter-toggle input[type="checkbox"] {
+            display: none;
+        }
+
+        .filter-toggle:has(input:checked) {
+            background: #e85a2a;
+            border-color: #e85a2a;
+            color: #fff;
+        }
+
+    .quick-links {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-links__label {
+        font-size: 0.8rem;
+        color: #7a7a7a;
+        font-weight: 600;
+    }
+
+    .quick-link {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #e85a2a;
+        background: rgba(232,90,42,0.08);
+        padding: 0.25rem 0.75rem;
+        border-radius: 100px;
+        text-decoration: none;
+        transition: all 200ms ease;
+        border: 1px solid transparent;
+    }
+
+        .quick-link:hover {
+            background: #e85a2a;
+            color: #fff;
+            text-decoration: none;
+            border-color: #e85a2a;
+        }
+
+    /* Pagination */
+    .pagination .page-link {
+        color: #e85a2a;
+        border-color: #e0dbd5;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #e85a2a;
+        border-color: #e85a2a;
+        color: #fff;
+    }
+
+    .pagination .page-link:hover {
+        background-color: rgba(232,90,42,0.08);
+        color: #e85a2a;
+    }
+
+    @@media (max-width: 768px) {
+        .filter-row {
+            flex-direction: column;
+        }
+
+        .filter-chip__input {
+            width: 100%;
+        }
+    }
+</style>

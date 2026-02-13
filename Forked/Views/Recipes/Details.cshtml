@@ -4,7 +4,7 @@
     ViewData["Title"] = Model.Title;
 }
 
-<div class="container my-5">
+<div class="my-5">
     <!-- Header Section -->
     <div class="row mb-4">
         <div class="col-12">
@@ -139,7 +139,7 @@
     <div class="row">
         <!-- Ingredients Section -->
         <div class="col-md-4 mb-4">
-            <div class="card">
+            <div class="card ingredients-card">
                 <div class="card-header bg-primary text-white">
                     <h3 class="mb-0">Ingredients</h3>
                 </div>
@@ -165,7 +165,7 @@
                 <div class="card-body">
                     @foreach (var step in Model.Steps)
                     {
-                        <div class="mb-4">
+                        <div class="step-block mb-4">
                             <h5 class="text-primary">@step.DisplayTitle</h5>
                             <p>@step.Instruction</p>
 
@@ -201,7 +201,7 @@
                 <div class="card-body">
                     @if (User.Identity.IsAuthenticated && !Model.HasUserReviewed)
                     {
-                        <div class="alert alert-info">
+                        <div class="alert alert-info mb-3">
                             <a asp-controller="Reviews" asp-action="Create" asp-route-recipeId="@Model.Id" class="btn btn-primary">
                                 Write a Review
                             </a>
@@ -212,11 +212,11 @@
                     {
                         @foreach (var review in Model.Reviews)
                         {
-                            <div class="card mb-3">
+                            <div class="card review-card mb-3">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                         <div>
-                                            <h5 class="mb-1">@review.DisplayName</h5>
+                                            <h5 class="reviewer-name mb-1">@review.DisplayName</h5>
                                             <div class="mb-2">
                                                 @for (int i = 1; i <= 5; i++)
                                                 {
@@ -224,9 +224,9 @@
                                                 }
                                             </div>
                                         </div>
-                                        <small class="text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                        <small class="review-date text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
                                     </div>
-                                    <p class="mb-2">@review.Message</p>
+                                    <p class="review-body mb-2">@review.Message</p>
 
                                     @if (review.ImagePaths.Any())
                                     {
@@ -279,6 +279,6 @@
 
 @section Scripts {
     <script>
-        // Add any JavaScript for interactivity here
+        // Add any JavaScript for interactivity here (if any lol)
     </script>
 }

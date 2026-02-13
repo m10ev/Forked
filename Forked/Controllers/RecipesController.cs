@@ -1,5 +1,6 @@
 ﻿using Forked.Models.Domains;
 using Forked.Models.ViewModels.Recipes;
+using Forked.Services.Ingredients;
 using Forked.Services.Recipes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +11,16 @@ namespace Forked.Controllers
     {
         private readonly IRecipeService _recipeService;
         private readonly UserManager<User> _userManager;
+        private readonly IIngredientParser _ingredientParser;
 
         public RecipesController(
             IRecipeService recipeService,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+            IIngredientParser ingredientParser)
         {
             _recipeService = recipeService;
             _userManager = userManager;
+            _ingredientParser = ingredientParser;
         }
 
         private static List<CreateRecipeViewModel> _recipes = new();
@@ -54,13 +58,12 @@ namespace Forked.Controllers
 
 
         // GET: /Recipes/Create
+        [HttpGet]
         public IActionResult Create()
         {
-            var vm = new CreateRecipeViewModel();
-            vm.Ingredients.Add(new CreateRecipeIngredientViewModel());
-            vm.Steps.Add(new CreateRecipeStepViewModel());
-            return View(vm);
+            return View(new CreateRecipeViewModel());
         }
+
 
         // POST: /Recipes/Create
         [HttpPost]
@@ -68,20 +71,43 @@ namespace Forked.Controllers
         public async Task<IActionResult> Create(CreateRecipeViewModel vm)
         {
             if (!ModelState.IsValid)
+            {
+                // Temporarily expose what's failing
+                var errors = ModelState
+                    .Where(x => x.Value.Errors.Any())
+                    .Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}");
+                TempData["DebugErrors"] = string.Join(" | ", errors);
                 return View(vm);
+            }
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-                return Unauthorized();
+            if (user == null) return Unauthorized();
 
-            var authorId = user.Id;
-
-            var recipe = await _recipeService.CreateAsync(vm, authorId);
-
-            // For testing, you can also store it in-memory
-            _recipes.Add(vm);
+            var recipe = await _recipeService.CreateAsync(vm, user.Id);
 
             return RedirectToAction("Details", new { id = recipe.Id });
+        }
+
+        // AJAX: Parse single ingredient
+        [HttpPost]
+        public IActionResult ParseIngredient([FromBody] string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return BadRequest("Empty ingredient");
+
+            var parsed = _ingredientParser.Parse(input);
+
+            if (string.IsNullOrWhiteSpace(parsed.Name))
+                return BadRequest("Could not parse ingredient");
+
+            return Json(new
+            {
+                quantity = parsed.Quantity,
+                unit = parsed.Unit ?? "",
+                name = parsed.Name,
+                preparation = parsed.Preparation ?? "",
+                formatted = _ingredientParser.Format(parsed)
+            });
         }
 
         [HttpPost]

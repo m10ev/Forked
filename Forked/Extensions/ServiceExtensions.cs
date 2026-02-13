@@ -1,6 +1,7 @@
 ﻿using Forked.Data;
 using Forked.Models.Domains;
 using Forked.Services;
+using Forked.Services.Ingredients;
 using Forked.Services.Interfaces;
 using Forked.Services.Recipes;
 using Microsoft.AspNetCore.Identity;
@@ -43,7 +44,12 @@ namespace Forked.Extensions
 
         public static void AddRecipeServices(this IServiceCollection services)
         {
-            services.AddTransient<IRecipeService, Services.Recipes.RecipeService>();
+            services.AddTransient<IRecipeService, RecipeService>();
+        }
+
+        public static void AddIngredientServices(this IServiceCollection services)
+        {
+            services.AddTransient<IIngredientParser, IngredientParser>();
         }
     }
 }

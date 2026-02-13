@@ -34,10 +34,11 @@ namespace Forked.Models.ViewModels.Recipes
         [Display(Name = "Servings")]
         public int Servings { get; set; }
 
-        [Display(Name = "Ingredients")]
+        [Display(Name = "Ingredients (one per line)")]
+        [DataType(DataType.MultilineText)]
         [Required(ErrorMessage = "At least one ingredient is required")]
-        [MinLength(1, ErrorMessage = "At least one ingredient is required")]
-        public List<CreateRecipeIngredientViewModel> Ingredients { get; set; } = new List<CreateRecipeIngredientViewModel>();
+        public List<ParsedIngredientViewModel> ParsedIngredients { get; set; } = new();
+
 
         [Display(Name = "Recipe Steps")]
         [Required(ErrorMessage = "At least one recipe step is required")]
@@ -57,8 +58,8 @@ namespace Forked.Models.ViewModels.Recipes
         }
 
         [BindNever]
-        public bool HasIngredients => Ingredients != null && Ingredients.Count > 0 &&
-            Ingredients.Any(i => !string.IsNullOrWhiteSpace(i.Name));
+        public bool HasIngredients => ParsedIngredients != null && ParsedIngredients.Count > 0 &&
+            ParsedIngredients.Any(i => !string.IsNullOrWhiteSpace(i.Name));
 
         [BindNever]
         public bool HasSteps => Steps != null && Steps.Count > 0 &&
