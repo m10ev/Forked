@@ -63,4 +63,5 @@ namespace Forked.Extensions
         {
             services.AddTransient<IUserService, UserService>();
         }
+    }
 }
