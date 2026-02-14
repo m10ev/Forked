@@ -30,14 +30,14 @@ namespace Forked.Controllers
             return View(userDetails);
         }
 
-        // GET: /User/Followers/{id}
+        // GET: /User/Followers/{displayName}
         public async Task<IActionResult> Followers(string displayName, int page = 1, int pageSize = 12) 
         {
             var followers = await _userService.GetFollowersAsync(displayName, page, pageSize);
             return View(followers); 
         }
 
-        // GET: /User/Following/{id}
+        // GET: /User/Following/{displayName}
         public async Task<IActionResult> Following(string displayName, int page = 1, int pageSize = 12) 
         {
             var following = await _userService.GetFollowingAsync(displayName, page, pageSize);
@@ -45,7 +45,7 @@ namespace Forked.Controllers
             return View(following);
         }
 
-        // GET: /User/Card/{id}
+        // GET: /User/Card/{displayName}
         public async Task<IActionResult> Card(string displayName) 
         { 
             var card = await _userService.GetUserCardAsync(displayName);
