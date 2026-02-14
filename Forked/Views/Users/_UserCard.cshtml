@@ -13,7 +13,7 @@
             <h5 class="card-title mb-1">@Model.DisplayName</h5>
             <p class="text-muted mb-2">@Model.Description</p>
 
-            <a asp-controller="User" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+            <a asp-controller="User" asp-action="Details" asp-route-displayName="@Model.DisplayName" class="btn btn-sm btn-primary">
                 View Profile
             </a>
         </div>
