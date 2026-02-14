@@ -74,11 +74,6 @@ namespace Forked.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Temporarily expose what's failing
-                var errors = ModelState
-                    .Where(x => x.Value.Errors.Any())
-                    .Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}");
-                TempData["DebugErrors"] = string.Join(" | ", errors);
                 return View(vm);
             }
 
@@ -86,6 +81,33 @@ namespace Forked.Controllers
             if (user == null) return Unauthorized();
 
             var recipe = await _recipeService.CreateAsync(vm, user.Id);
+
+            return RedirectToAction("Details", new { id = recipe.Id });
+        }
+
+        [HttpGet("Recipes/Fork/{id}")]
+        public async Task<IActionResult> Fork(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var forkVm = await _recipeService.PrepareForkAsync(id);
+
+            if (forkVm == null) return NotFound();
+            return View(forkVm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Fork(CreateForkViewModel vm)
+        {
+            if(!ModelState.IsValid)
+                return View(vm);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var recipe = await _recipeService.ForkAsync(vm, user.Id);
 
             return RedirectToAction("Details", new { id = recipe.Id });
         }

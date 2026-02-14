@@ -34,6 +34,64 @@ namespace Forked.Extensions.Mapping
             return recipe;
         }
 
+        public static async Task<CreateForkViewModel> PrepareForkAsync(this Recipe original)
+        {
+            var vm = new CreateForkViewModel
+            {
+                Title = original.Title,
+                Description = original.Description,
+                Servings = original.Servings,
+                PreparationTimeInMinutes = original.PreparationTimeInMinutes,
+                CookingTimeInMinutes = original.CookingTimeInMinutes,
+                ParentRecipeId = original.Id,
+                ImagePaths = original.ImagePaths,
+                Steps = original.RecipeSteps
+                    .OrderBy(s => s.StepNumber)
+                    .Select(s => new CreateForkRecipeStepViewModel
+                    {
+                        StepNumber = s.StepNumber,
+                        StepName = s.StepName,
+                        Instruction = s.Instruction,
+                        ImagePaths = s.ImagePaths
+                    }).ToList(),
+                ParsedIngredients = original.RecipeIngredients
+                    .Select(ri => new ParsedIngredientViewModel
+                    {
+                        Quantity = ri.Quantity,
+                        Unit = ri.Unit,
+                        Name = ri.Ingredient?.Name,
+                        Preparation = ri.Preparation
+                    }).ToList()
+            };
+
+            return vm;
+        }
+
+        public static async Task<Recipe> ToRecipeAsync(this CreateForkViewModel viewModel, string userId, IImageService imageService)
+        {
+            var recipe = new Recipe
+            {
+                Title = viewModel.Title,
+                Description = viewModel.Description,
+                PreparationTimeInMinutes = viewModel.PreparationTimeInMinutes,
+                CookingTimeInMinutes = viewModel.CookingTimeInMinutes,
+                Servings = viewModel.Servings,
+                AuthorId = userId,
+                ParentRecipeId = viewModel.ParentRecipeId,
+                ImagePaths = viewModel.ImagePaths ?? new()
+            };
+            if (viewModel.ImageFiles?.Any() == true)
+            {
+                foreach (var image in viewModel.ImageFiles)
+                {
+                    var path = await imageService.SaveRecipeImageAsync(image);
+                    recipe.ImagePaths.Add(path);
+                }
+            }
+            return recipe;
+        }
+
+
         public static RecipeDetailViewModel ToDetailViewModel(this Recipe recipe, string? currentUserId = null)
         {
             return new RecipeDetailViewModel
@@ -198,6 +256,38 @@ namespace Forked.Extensions.Mapping
                     Instruction = stepVm.Instruction,
                     ImagePaths = new()
                 };
+
+                if (stepVm.ImageFiles?.Any() == true)
+                {
+                    foreach (var file in stepVm.ImageFiles)
+                    {
+                        var path = await imageService.SaveStepImageAsync(file);
+                        step.ImagePaths.Add(path);
+                    }
+                }
+
+                steps.Add(step);
+            }
+
+            return steps.OrderBy(s => s.StepNumber).ToList();
+        }
+
+        public static async Task<List<RecipeStep>> ToRecipeStepsAsync(
+            this List<CreateForkRecipeStepViewModel> stepViewModels,
+            IImageService imageService)
+        {
+            var steps = new List<RecipeStep>();
+
+            foreach (var stepVm in stepViewModels)
+            {
+                var step = new RecipeStep
+                {
+                    StepNumber = stepVm.StepNumber,
+                    StepName = stepVm.StepName,
+                    Instruction = stepVm.Instruction
+                };
+
+                step.ImagePaths.AddRange(stepVm.ImagePaths ?? new List<string>());
 
                 if (stepVm.ImageFiles?.Any() == true)
                 {

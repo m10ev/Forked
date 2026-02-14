@@ -12,11 +12,13 @@ namespace Forked.Services.Recipes
     {
         private readonly ForkedDbContext _context;
         private readonly IImageService _imageService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public RecipeService(ForkedDbContext context, IImageService imageService)
+        public RecipeService(ForkedDbContext context, IImageService imageService, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _imageService = imageService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<Recipe> CreateAsync(
@@ -30,19 +32,56 @@ namespace Forked.Services.Recipes
             if (vm.ParsedIngredients == null || !vm.ParsedIngredients.Any())
                 throw new ArgumentException("Recipe must contain at least one ingredient.");
 
-            // 1️⃣ Create the base recipe entity
+            // Create the base recipe entity
             var recipe = await vm.ToRecipe(authorId, _imageService);
 
             if (parentRecipeId.HasValue)
                 recipe.ParentRecipeId = parentRecipeId.Value;
 
-            // 2️⃣ Map recipe steps
+            // Map recipe steps
             recipe.RecipeSteps = await vm.Steps.ToRecipeStepsAsync(_imageService);
 
-            // 3️⃣ Map parsed ingredients to domain
+            // Map parsed ingredients to domain
             recipe.RecipeIngredients = await vm.ParsedIngredients.ToRecipeIngredientsAsync(_context);
 
-            // 4️⃣ Add recipe to context and save
+            // Add recipe to context and save
+            _context.Recipes.Add(recipe);
+            await _context.SaveChangesAsync();
+
+            return recipe;
+        }
+
+        public async Task<CreateForkViewModel> PrepareForkAsync(int originalRecipeId)
+        {
+            var original = await _context.Recipes
+                .Include(r => r.RecipeIngredients)
+                .ThenInclude(ri => ri.Ingredient)
+                .Include(r => r.RecipeSteps)
+                .FirstOrDefaultAsync(r => r.Id == originalRecipeId);
+
+            if (original == null) throw new KeyNotFoundException("Original recipe not found");
+
+            return await original.PrepareForkAsync();
+        }
+
+        public async Task<Recipe> ForkAsync(CreateForkViewModel vm, string authorId)
+        {
+            if(vm == null)
+                throw new ArgumentNullException(nameof(vm));
+
+            if(vm.ParsedIngredients == null || !vm.ParsedIngredients.Any())
+                throw new ArgumentException("Recipe must contain at least one ingredient.");
+
+            // Create the base recipe entity
+            var recipe = await vm.ToRecipeAsync(authorId, _imageService);
+
+            //
+            recipe.RecipeSteps = await vm.Steps.ToRecipeStepsAsync(_imageService);
+
+            // Map recipe steps
+            recipe.RecipeIngredients = await vm.ParsedIngredients.ToRecipeIngredientsAsync(_context);
+
+            // Add recipe to context and save
             _context.Recipes.Add(recipe);
             await _context.SaveChangesAsync();
 
