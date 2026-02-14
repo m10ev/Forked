@@ -26,15 +26,15 @@
                 {
                     if (Model.IsFollowedByCurrentUser)
                     {
-                        <form asp-action="Unfollow" method="post">
-                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
+                        <form asp-action="Unfollow" method="post" asp-route-displayName="@Model.DisplayName">
+                            <input type="hidden" name="displayName" value="@Model.DisplayName"/>
                             <button type="submit" class="btn btn-danger">Unfollow</button>
                         </form>
                     }
                     else
                     {
-                        <form asp-action="Follow" method="post">
-                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
+                        <form asp-action="Follow" method="post" asp-route-displayName="@Model.DisplayName">
+                            <input type="hidden" name="displayName" value="@Model.DisplayName"/>
                             <button type="submit" class="btn btn-primary">Follow</button>
                         </form>
                     }

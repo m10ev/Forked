@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Forked.Controllers
 {
+    [Route("Users")]
     public class UsersController : Controller
     {
         private readonly IUserService _userService; 
@@ -17,10 +18,11 @@ namespace Forked.Controllers
         }
 
         // GET: /User/Details/{displayName}
+        [HttpGet("Details/{displayName}")]
         public async Task<IActionResult> Details(string displayName)
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            var currentUserId = currentUser.Id;
+            var currentUserId = currentUser?.Id;
             var userDetails = await _userService.GetUserDetailsAsync(displayName, currentUserId);
             if (userDetails == null)
             {
@@ -31,6 +33,7 @@ namespace Forked.Controllers
         }
 
         // GET: /User/Followers/{displayName}
+        [HttpGet("Followers/{displayName}")]
         public async Task<IActionResult> Followers(string displayName, int page = 1, int pageSize = 12) 
         {
             var followers = await _userService.GetFollowersAsync(displayName, page, pageSize);
@@ -38,6 +41,7 @@ namespace Forked.Controllers
         }
 
         // GET: /User/Following/{displayName}
+        [HttpGet("Following/{displayName}")]
         public async Task<IActionResult> Following(string displayName, int page = 1, int pageSize = 12) 
         {
             var following = await _userService.GetFollowingAsync(displayName, page, pageSize);
@@ -46,6 +50,7 @@ namespace Forked.Controllers
         }
 
         // GET: /User/Card/{displayName}
+        [HttpGet("Card/{displayName}")]
         public async Task<IActionResult> Card(string displayName) 
         { 
             var card = await _userService.GetUserCardAsync(displayName);
@@ -57,6 +62,7 @@ namespace Forked.Controllers
             return PartialView("_UserCard", card);
         }
 
+        [HttpPost("Follow/{displayName}")]
         public async Task<IActionResult> Follow(string displayName)
         {
             var currentUser = await _userManager.GetUserAsync(User);
@@ -68,6 +74,7 @@ namespace Forked.Controllers
             return RedirectToAction("Details", new { displayName }); 
         }
 
+        [HttpPost("Unfollow/{displayName}")]
         public async Task<IActionResult> Unfollow(string displayName) 
         {
             var currentUser = await _userManager.GetUserAsync(User);
