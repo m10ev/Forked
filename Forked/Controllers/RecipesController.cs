@@ -2,6 +2,7 @@
 using Forked.Models.ViewModels.Recipes;
 using Forked.Services.Ingredients;
 using Forked.Services.Recipes;
+using Forked.Services.UserFavoriteRecipes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,20 +11,21 @@ namespace Forked.Controllers
     public class RecipesController : Controller
     {
         private readonly IRecipeService _recipeService;
+        private readonly IFavoriteService _favoriteService;
         private readonly UserManager<User> _userManager;
         private readonly IIngredientParser _ingredientParser;
 
         public RecipesController(
             IRecipeService recipeService,
+            IFavoriteService favoriteService,
             UserManager<User> userManager,
             IIngredientParser ingredientParser)
         {
             _recipeService = recipeService;
+            _favoriteService = favoriteService;
             _userManager = userManager;
             _ingredientParser = ingredientParser;
         }
-
-        private static List<CreateRecipeViewModel> _recipes = new();
 
         // GET: /Recipes
         public async Task<IActionResult> Index(RecipeFilterViewModel filters, RecipeSortOption sortBy = RecipeSortOption.MostPopular, int page = 1, int pageSize = 12)
@@ -72,11 +74,6 @@ namespace Forked.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Temporarily expose what's failing
-                var errors = ModelState
-                    .Where(x => x.Value.Errors.Any())
-                    .Select(x => $"{x.Key}: {string.Join(", ", x.Value.Errors.Select(e => e.ErrorMessage))}");
-                TempData["DebugErrors"] = string.Join(" | ", errors);
                 return View(vm);
             }
 
@@ -84,6 +81,33 @@ namespace Forked.Controllers
             if (user == null) return Unauthorized();
 
             var recipe = await _recipeService.CreateAsync(vm, user.Id);
+
+            return RedirectToAction("Details", new { id = recipe.Id });
+        }
+
+        [HttpGet("Recipes/Fork/{id}")]
+        public async Task<IActionResult> Fork(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var forkVm = await _recipeService.PrepareForkAsync(id);
+
+            if (forkVm == null) return NotFound();
+            return View(forkVm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Fork(CreateForkViewModel vm)
+        {
+            if(!ModelState.IsValid)
+                return View(vm);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return NotFound();
+
+            var recipe = await _recipeService.ForkAsync(vm, user.Id);
 
             return RedirectToAction("Details", new { id = recipe.Id });
         }
@@ -111,6 +135,26 @@ namespace Forked.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> FavoriteRecipe(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            await _favoriteService.AddFavouriteAsync(user.Id, id);
+            return RedirectToAction("Details", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnfavoriteRecipe(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            await _favoriteService.RemoveFavouriteAsync(user.Id, id);
+            return RedirectToAction("Details", new { id });
+        }
+
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
@@ -118,9 +162,12 @@ namespace Forked.Controllers
             if (user == null)
                 return Unauthorized();
 
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isAdmin = roles.Contains("Admin");
+
             try
             {
-                await _recipeService.DeleteRecipeAsync(id, user.Id);
+                await _recipeService.DeleteRecipeAsync(id, user.Id, isAdmin);
             }
             catch (KeyNotFoundException)
             {

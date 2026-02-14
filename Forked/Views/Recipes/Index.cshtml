@@ -407,9 +407,9 @@
     }
 
     .filter-chip__input {
-        min-width: 110px;
+        min-width: 140px;
         font-size: 0.875rem;
-        padding: 0.4rem 0.65rem;
+        padding: 0.45rem 0.75rem;
         height: auto;
     }
 
@@ -513,8 +513,26 @@
             flex-direction: column;
         }
 
-        .filter-chip__input {
+        .filter-chip,
+        .filter-chip--toggles,
+        .filter-chip--clear .filter-chip__input {
             width: 100%;
+            min-width: auto;
+        }
+
+        .filter-toggles {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .search-bar .input-group {
+            flex-direction: column;
+        }
+
+        .search-bar__input,
+        .search-bar button {
+            width: 100%;
+            margin-top: 0.5rem;
         }
     }
 </style>

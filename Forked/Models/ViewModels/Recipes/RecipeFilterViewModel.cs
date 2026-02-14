@@ -29,7 +29,10 @@ namespace Forked.Models.ViewModels.Recipes
         public double? MinimumRating { get; set; }
 
         [Display(Name = "Author")]
-        public string? AuthorId { get; set; }
+        public string? AuthorName { get; set; }
+
+        [Display(Name = "Only My Recipes")]
+        public bool OnlyMyRecipes { get; set; } = false;
         [Display(Name = "Only My Favourites")]
         public bool OnlyFavourites { get; set; } = false;
         [Display(Name = "Only Forked Recipes")]
@@ -44,8 +47,9 @@ namespace Forked.Models.ViewModels.Recipes
             MinServings.HasValue ||
             MaxServings.HasValue ||
             MinimumRating.HasValue ||
-            !string.IsNullOrWhiteSpace(AuthorId) ||
+            !string.IsNullOrWhiteSpace(AuthorName) ||
             OnlyFavourites ||
+            OnlyMyRecipes ||
             OnlyForked ||
             OnlyOriginals;
     }

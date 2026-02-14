@@ -6,11 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Forked.Controllers
 {
-    public class UserController : Controller
+    public class UsersController : Controller
     {
         private readonly IUserService _userService; 
         private readonly UserManager<User> _userManager; 
-        public UserController(IUserService userService, UserManager<User> userManager)
+        public UsersController(IUserService userService, UserManager<User> userManager)
         {
             _userService = userService;
             _userManager = userManager; 
