@@ -17,8 +17,8 @@
             </div>
 
             <div class="mt-2">
-                <a asp-controller="Users" asp-action="Followers" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Followers</a>
-                <a asp-controller="Users" asp-action="Following" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Following</a>
+                <a asp-controller="Users" asp-action="Followers" asp-route-displayName="@Model.DisplayName" class="btn btn-outline-primary btn-sm">Followers</a>
+                <a asp-controller="Users" asp-action="Following" asp-route-displayName="@Model.DisplayName" class="btn btn-outline-primary btn-sm">Following</a>
             </div>
 
             <div class="mt-3">

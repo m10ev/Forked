@@ -34,7 +34,7 @@ namespace Forked.Extensions.Mapping
 
         public static UserFollowersListViewModel ToFollowersListModel(this User user, int currentPage, int pageSize)
         {
-            var followers = user.Followers.Select(f => f.Following).Select(f => f.ToCardViewModel()).ToList();
+            var followers = user.Followers.Select(f => f.Follower).Select(f => f.ToCardViewModel()).ToList();
             return new UserFollowersListViewModel(followers, currentPage, pageSize, followers.Count);
         }
 
