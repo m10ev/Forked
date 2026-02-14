@@ -21,9 +21,9 @@ namespace Forked.Services.Users
             return user;
         }
 
-        public async Task DeleteAsync(string userId)
+        public async Task DeleteAsync(string displayName)
         {
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.FindAsync(displayName);
             if (user == null)
             {
                 throw new KeyNotFoundException("User not found!");
@@ -33,38 +33,38 @@ namespace Forked.Services.Users
             await _context.SaveChangesAsync();
         }
 
-        public async Task<UserFollowersListViewModel> GetFollowersAsync(string userId, int page, int pageSize)
+        public async Task<UserFollowersListViewModel> GetFollowersAsync(string displayName, int page, int pageSize)
         {
             var user = await _context.Users.Include(u => u.Followers)
                 .ThenInclude(f => f.Follower)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.DisplayName == displayName);
 
             return user!.ToFollowersListModel(page, pageSize);
         }
 
-        public async Task<UserFollowingListViewModel> GetFollowingAsync(string userId, int page, int pageSize)
+        public async Task<UserFollowingListViewModel> GetFollowingAsync(string displayName, int page, int pageSize)
         {
             var user = await _context.Users.Include(u => u.Following)
                 .ThenInclude(f => f.Following)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.DisplayName == displayName);
 
             return user!.ToFollowingListModel(page, pageSize);
         }
 
-        public async Task<UserCardViewModel?> GetUserCardAsync(string userId)
+        public async Task<UserCardViewModel?> GetUserCardAsync(string displayName)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.DisplayName == displayName);
 
             return user?.ToCardViewModel();
         }
 
-        public async Task<UserDetailsViewModel?> GetUserDetailsAsync(string userId, string? currentUserId)
+        public async Task<UserDetailsViewModel?> GetUserDetailsAsync(string displayName, string? currentUserId)
         {
             var user = await _context.Users
                 .Include(u => u.Followers)
                 .Include(u => u.Following)
                 .Include(u => u.Recipes)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.DisplayName == displayName);
 
             return user?.ToDetailsViewModel();
         }
