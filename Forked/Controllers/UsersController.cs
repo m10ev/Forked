@@ -16,12 +16,12 @@ namespace Forked.Controllers
             _userManager = userManager; 
         }
 
-        // GET: /User/Details/{id}
-        public async Task<IActionResult> Details(string id)
+        // GET: /User/Details/{displayName}
+        public async Task<IActionResult> Details(string displayName)
         {
             var currentUser = await _userManager.GetUserAsync(User);
             var currentUserId = currentUser.Id;
-            var userDetails = await _userService.GetUserDetailsAsync(id, currentUserId);
+            var userDetails = await _userService.GetUserDetailsAsync(displayName, currentUserId);
             if (userDetails == null)
             {
                 return NotFound();
@@ -31,24 +31,24 @@ namespace Forked.Controllers
         }
 
         // GET: /User/Followers/{id}
-        public async Task<IActionResult> Followers(string id, int page = 1, int pageSize = 12) 
+        public async Task<IActionResult> Followers(string displayName, int page = 1, int pageSize = 12) 
         {
-            var followers = await _userService.GetFollowersAsync(id, page, pageSize);
+            var followers = await _userService.GetFollowersAsync(displayName, page, pageSize);
             return View(followers); 
         }
 
         // GET: /User/Following/{id}
-        public async Task<IActionResult> Following(string id, int page = 1, int pageSize = 12) 
+        public async Task<IActionResult> Following(string displayName, int page = 1, int pageSize = 12) 
         {
-            var following = await _userService.GetFollowingAsync(id, page, pageSize);
+            var following = await _userService.GetFollowingAsync(displayName, page, pageSize);
 
             return View(following);
         }
 
         // GET: /User/Card/{id}
-        public async Task<IActionResult> Card(string id) 
+        public async Task<IActionResult> Card(string displayName) 
         { 
-            var card = await _userService.GetUserCardAsync(id);
+            var card = await _userService.GetUserCardAsync(displayName);
             if (card == null)
             {
                 return NotFound();
