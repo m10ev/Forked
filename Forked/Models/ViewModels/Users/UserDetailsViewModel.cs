@@ -17,6 +17,8 @@ namespace Forked.Models.ViewModels.Users
        // [Display(Name = "Forked")]
        // public int ForkedCount { get; set; }
         [Display(Name = "Recipes")]
-        public int RecipeCount { get; set; } 
+        public int RecipeCount { get; set; }
+        public bool IsFollowedByCurrentUser { get; set; }
+        public bool IsCurrentUser { get; set; }
     }
 }

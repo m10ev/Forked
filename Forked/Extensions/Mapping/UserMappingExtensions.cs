@@ -6,7 +6,7 @@ namespace Forked.Extensions.Mapping
 {
     public static class UserMappingExtensions
     {
-        public static UserDetailsViewModel ToDetailsViewModel(this User user)
+        public static UserDetailsViewModel ToDetailsViewModel(this User user, string? currentUserId)
         {
             return new UserDetailsViewModel
             {
@@ -15,8 +15,9 @@ namespace Forked.Extensions.Mapping
                 ProfilePicturePath = user.ProfilePicturePath,
                 FollowersCount = user.Followers.Count,
                 FollowingCount = user.Following.Count,
-                //ForkedCount = ,
-                RecipeCount = user.Recipes.Count
+                RecipeCount = user.Recipes.Count,
+                IsCurrentUser = user.Id == currentUserId, 
+                IsFollowedByCurrentUser = user.Followers .Any(f => f.FollowerId == currentUserId)
             };
         }
 
@@ -42,5 +43,7 @@ namespace Forked.Extensions.Mapping
             var following = user.Following.Select(f => f.Following).Select(f => f.ToCardViewModel()).ToList();
             return new UserFollowingListViewModel(following, currentPage, pageSize, following.Count);
         }
+
+
     }
 }

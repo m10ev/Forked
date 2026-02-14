@@ -66,7 +66,37 @@ namespace Forked.Services.Users
                 .Include(u => u.Recipes)
                 .FirstOrDefaultAsync(u => u.DisplayName == displayName);
 
-            return user?.ToDetailsViewModel();
+            return user?.ToDetailsViewModel(currentUserId);
+        }
+
+        public async Task FollowAsync(string currentUserId, string targetDisplayName)
+        {
+            var targetUser = await _context.Users.FirstOrDefaultAsync(u => u.DisplayName == targetDisplayName);
+            if (targetUser == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+            bool alreadyFollowing = await _context.UserFollows.AnyAsync(f => f.FollowerId == currentUserId && f.FollowingId == targetUser.Id); 
+            if (!alreadyFollowing) 
+            {
+                _context.UserFollows.Add(new UserFollow { FollowerId = currentUserId, FollowingId = targetUser.Id }); 
+                await _context.SaveChangesAsync(); 
+            } 
+        }
+
+        public async Task UnfollowAsync(string currentUserId, string targetDisplayName) 
+        {
+            var targetUser = await _context.Users.FirstOrDefaultAsync(u => u.DisplayName == targetDisplayName);
+            if (targetUser == null)
+            {
+                throw new KeyNotFoundException("User not found");
+            }
+            var follow = await _context.UserFollows.FirstOrDefaultAsync(f => f.FollowerId == currentUserId && f.FollowingId == targetUser.Id);
+            if (follow != null) 
+            {
+                _context.UserFollows.Remove(follow); 
+                await _context.SaveChangesAsync(); 
+            }
         }
     }
 }

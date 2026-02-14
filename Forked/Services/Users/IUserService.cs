@@ -11,6 +11,8 @@ namespace Forked.Services.Users
         Task<UserFollowingListViewModel> GetFollowingAsync(string userId, int page, int pageSize);
         Task<UserCardViewModel?> GetUserCardAsync(string userId);
         Task DeleteAsync(string userId);
+        Task FollowAsync(string id, string displayName);
+        Task UnfollowAsync(string id, string displayName);
     }
 }
 

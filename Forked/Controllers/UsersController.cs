@@ -56,5 +56,27 @@ namespace Forked.Controllers
 
             return PartialView("_UserCard", card);
         }
+
+        public async Task<IActionResult> Follow(string displayName)
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized(); 
+            } 
+            await _userService.FollowAsync(currentUser.Id, displayName); 
+            return RedirectToAction("Details", new { displayName }); 
+        }
+
+        public async Task<IActionResult> Unfollow(string displayName) 
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
+            await _userService.UnfollowAsync(currentUser.Id, displayName);
+            return RedirectToAction("Details", new { displayName }); 
+        }
     }
 }

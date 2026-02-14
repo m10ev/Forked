@@ -20,6 +20,27 @@
                 <a asp-controller="Users" asp-action="Followers" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Followers</a>
                 <a asp-controller="Users" asp-action="Following" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">Following</a>
             </div>
+
+            <div class="mt-3">
+                @if (!Model.IsCurrentUser)
+                {
+                    if (Model.IsFollowedByCurrentUser)
+                    {
+                        <form asp-action="Unfollow" method="post">
+                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
+                            <button type="submit" class="btn btn-danger">Unfollow</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="Follow" method="post">
+                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
+                            <button type="submit" class="btn btn-primary">Follow</button>
+                        </form>
+                    }
+                }
+
+            </div>
         </div>
     </div>
 
