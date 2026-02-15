@@ -193,11 +193,12 @@ public static class DatabaseSeeder
 
             var user = new User
             {
-                UserName = userName,
-                NormalizedUserName = userName.ToUpperInvariant(),
+                UserName = email, // UserName must match Email for email-based login
+                NormalizedUserName = email.ToUpperInvariant(),
                 Email = email,
                 NormalizedEmail = email.ToUpperInvariant(),
                 EmailConfirmed = true,
+                LockoutEnabled = false,
                 DisplayName = display,
                 Bio = $"Hi, I'm {display} — one of the Forked test accounts.",
                 ProfilePicturePath = AvatarUrl(rng.PickRandom(ProfilePhotoIds)),
@@ -208,6 +209,7 @@ public static class DatabaseSeeder
             if (result.Succeeded)
             {
                 await userMgr.AddToRoleAsync(user, role);
+                await userMgr.SetLockoutEnabledAsync(user, false);
                 allUsers.Add(user);
                 logger.LogInformation("      ✔  {Role}: {Email}", role, email);
             }
@@ -227,6 +229,7 @@ public static class DatabaseSeeder
             .UseSeed(RngSeed)
             .RuleFor(u => u.Email, f => f.Internet.Email())
             .RuleFor(u => u.EmailConfirmed, _ => true)
+            .RuleFor(u => u.LockoutEnabled, _ => false)
             .RuleFor(u => u.Bio, f => f.PickRandom<string?>(new string?[]
             {
                 f.Lorem.Sentence(8),
@@ -247,17 +250,31 @@ public static class DatabaseSeeder
         {
             var dto = communityUserDtos[i];
             // Guarantee unique UserName and DisplayName with index suffix to satisfy the unique index
-            dto.UserName = $"user_{i:D4}_{rng.Random.AlphaNumeric(4)}";
+            dto.UserName = dto.Email; // Identity requires UserName == Email for email-based login
             dto.DisplayName = $"{rng.Name.FullName()} #{i:D4}";
 
             var result = await userMgr.CreateAsync(dto, "Community@123!");
             if (result.Succeeded)
             {
                 await userMgr.AddToRoleAsync(dto, "User");
+                await userMgr.SetLockoutEnabledAsync(dto, false);
                 allUsers.Add(dto);
                 created++;
             }
         }
+
+        // Force-disable lockout on test accounts via raw SQL — UserManager.CreateAsync
+        // ignores LockoutEnabled on the entity and applies Identity options instead.
+        await db.Database.ExecuteSqlRawAsync(@"
+            UPDATE AspNetUsers
+            SET LockoutEnabled = 0, LockoutEnd = NULL, AccessFailedCount = 0
+            WHERE Email IN (
+                'admin@forked.dev',
+                'alice@forked.dev',
+                'bob@forked.dev',
+                'charlie@forked.dev',
+                'diana@forked.dev'
+            )");
 
         logger.LogInformation("      ✔  {Total} total users.", allUsers.Count);
 

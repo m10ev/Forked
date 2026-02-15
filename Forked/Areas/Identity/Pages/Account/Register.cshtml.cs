@@ -118,8 +118,10 @@ namespace Forked.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
             if (ModelState.IsValid)
             {
+                // Check if username or email already exists
                 var existingDisplayName = await _userManager.Users
                     .IgnoreQueryFilters()
                     .FirstOrDefaultAsync(u => u.DisplayName == Input.DisplayName);
@@ -130,66 +132,17 @@ namespace Forked.Areas.Identity.Pages.Account
                     return Page();
                 }
 
-                var existingUser = await _userManager.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == Input.Email);
+                var existingUser = await _userManager.Users.IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Email == Input.Email);
 
                 if (existingUser != null)
                 {
-                    if (existingUser.DeletedAt != null)
-                    {
-                        // RESTORE USER
-                        existingUser.DeletedAt = null;
-
-                        existingUser.DisplayName = Input.DisplayName;
-                        existingUser.EmailConfirmed = false;
-
-                        // Reset password
-                        var resetToken = await _userManager.GeneratePasswordResetTokenAsync(existingUser);
-                        var resetResult = await _userManager.ResetPasswordAsync(
-                            existingUser,
-                            resetToken,
-                            Input.Password
-                        );
-
-                        if (!resetResult.Succeeded)
-                        {
-                            foreach (var error in resetResult.Errors)
-                                ModelState.AddModelError(string.Empty, error.Description);
-
-                            return Page();
-                        }
-
-                        await _userManager.UpdateAsync(existingUser);
-
-                        _logger.LogInformation("Soft-deleted user restored.");
-
-                        // Send confirmation email again
-                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(existingUser);
-                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                        var callbackUrl = Url.Page(
-                            "/Account/ConfirmEmail",
-                            null,
-                            new { area = "Identity", userId = existingUser.Id, code },
-                            Request.Scheme);
-
-                        var templatePath = "Account/email-confirmation.html";
-                        var replacements = new Dictionary<string, string>
-                        {
-                            { "{{CONFIRMATION_LINK}}", HtmlEncoder.Default.Encode(callbackUrl) },
-                            { "{{USER_EMAIL}}", Input.Email }
-                        };
-
-                        await ((EmailSender)_emailSender).SendTemplateEmailAsync(Input.Email, "Confirm your email", templatePath, replacements);
-
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email });
-                    }
-
                     ModelState.AddModelError(string.Empty, "Email already registered.");
                     return Page();
                 }
 
+                // Create new user
                 var user = CreateUser();
-
                 user.DisplayName = Input.DisplayName;
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -203,43 +156,35 @@ namespace Forked.Areas.Identity.Pages.Account
 
                     await _userManager.AddToRoleAsync(user, "User");
 
-                    var userId = await _userManager.GetUserIdAsync(user);
+                    // Send confirmation email
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
                     var callbackUrl = Url.Page(
                         "/Account/ConfirmEmail",
                         pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                        values: new { area = "Identity", userId = user.Id, code, returnUrl },
                         protocol: Request.Scheme);
 
                     var templatePath = "Account/email-confirmation.html";
                     var replacements = new Dictionary<string, string>
-
-                    {
-                        { "{{CONFIRMATION_LINK}}", HtmlEncoder.Default.Encode(callbackUrl) },
-                        { "{{USER_EMAIL}}", Input.Email }
-                    };
+            {
+                { "{{CONFIRMATION_LINK}}", HtmlEncoder.Default.Encode(callbackUrl) },
+                { "{{USER_EMAIL}}", Input.Email }
+            };
 
                     await ((EmailSender)_emailSender).SendTemplateEmailAsync(Input.Email, "Confirm your email", templatePath, replacements);
 
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
-                    }
-
+                    // **Do NOT sign in automatically**
+                    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl });
                 }
+
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
 
-            // If we got this far, something failed, redisplay form
             return Page();
         }
 

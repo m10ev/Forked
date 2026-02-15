@@ -58,6 +58,33 @@ namespace Forked.Controllers
             return View(recipe);
         }
 
+        // GET: /Recipes/User/{authorName}
+        [HttpGet("Recipes/User")]
+        public async Task<IActionResult> UserRecipes(string authorName, int page = 1, int pageSize = 12)
+        {
+            if (string.IsNullOrEmpty(authorName))
+                return BadRequest();
+
+            var currentUser = await _userManager.GetUserAsync(User);
+            var currentUserId = currentUser?.Id;
+
+            var filters = new RecipeFilterViewModel
+            {
+                AuthorName = authorName
+            };
+
+            var recipes = await _recipeService.GetPagedRecipesAsync(
+                filters,
+                RecipeSortOption.MostPopular,
+                page,
+                pageSize,
+                currentUserId
+            );
+
+            return PartialView("_RecipeGrid", recipes);
+        }
+
+
 
         // GET: /Recipes/Create
         [HttpGet]

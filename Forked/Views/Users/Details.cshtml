@@ -2,8 +2,10 @@
 @{
     ViewData["Title"] = "Details";
 }
+
 <div class="container mt-4">
 
+    <!-- ================= User Profile ================= -->
     <div class="d-flex align-items-center gap-4">
         <img src="@Model.ProfilePicturePath" class="rounded-circle" style="width:120px;height:120px;object-fit:cover;" />
 
@@ -27,21 +29,61 @@
                     if (Model.IsFollowedByCurrentUser)
                     {
                         <form asp-action="Unfollow" method="post" asp-route-displayName="@Model.DisplayName">
-                            <input type="hidden" name="displayName" value="@Model.DisplayName"/>
+                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
                             <button type="submit" class="btn btn-danger">Unfollow</button>
                         </form>
                     }
                     else
                     {
                         <form asp-action="Follow" method="post" asp-route-displayName="@Model.DisplayName">
-                            <input type="hidden" name="displayName" value="@Model.DisplayName"/>
+                            <input type="hidden" name="displayName" value="@Model.DisplayName" />
                             <button type="submit" class="btn btn-primary">Follow</button>
                         </form>
                     }
                 }
-
             </div>
         </div>
     </div>
 
+    <!-- ================= User Recipes Section ================= -->
+    <div class="mt-5">
+        <h3>@Model.DisplayName's Recipes</h3>
+        <div id="user-recipes-container">
+            <div class="text-muted">Loading recipes...</div>
+        </div>
+    </div>
+
 </div>
+
+@section Scripts {
+    <script>
+        async function loadUserRecipes(page = 1) {
+            const container = document.getElementById('user-recipes-container');
+            const authorName = "@Model.DisplayName";
+
+            try {
+                const response = await fetch(`/Recipes/User?authorName=${encodeURIComponent(authorName)}&page=${page}`);
+                if (!response.ok) throw new Error('Failed to load recipes');
+
+                const html = await response.text();
+                container.innerHTML = html;
+
+                // Attach click events to pagination links
+                container.querySelectorAll('.pagination .page-link').forEach(link => {
+                    link.addEventListener('click', e => {
+                        e.preventDefault();
+                        const nextPage = link.getAttribute('data-page');
+                        loadUserRecipes(nextPage);
+                    });
+                });
+
+            } catch (err) {
+                container.innerHTML = '<div class="alert alert-danger">Unable to load recipes.</div>';
+                console.error(err);
+            }
+        }
+
+        // Initial load
+        loadUserRecipes();
+    </script>
+}
