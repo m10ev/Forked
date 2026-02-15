@@ -1,0 +1,81 @@
+﻿@model Forked.Models.ViewModels.Recipes.RecipeListViewModel
+
+@if (Model.Items.Any())
+{
+    <div class="row g-4">
+        @foreach (var recipe in Model.Items)
+        {
+            <div class="col-md-4 col-sm-6">
+                <a asp-action="Details" asp-controller="Recipes" asp-route-id="@recipe.Id" class="recipe-card-link">
+                    <div class="rcard">
+                        <!-- Image -->
+                        <div class="rcard__img-wrap">
+                            @if (!string.IsNullOrEmpty(recipe.ImagePath))
+                            {
+                                <img src="@recipe.ImagePath" class="rcard__img" alt="@recipe.Title" />
+                            }
+                            else
+                            {
+                                <div class="rcard__img rcard__img--placeholder">
+                                    <span>🍽️</span>
+                                </div>
+                            }
+
+                            @if (recipe.IsForked)
+                            {
+                                <span class="rcard__badge rcard__badge--forked">🍴 Forked</span>
+                            }
+                            else
+                            {
+                                <span class="rcard__badge rcard__badge--original">✨ Original</span>
+                            }
+                        </div>
+
+                        <!-- Body -->
+                        <div class="rcard__body">
+                            <p class="rcard__author">@recipe.AuthorName</p>
+                            <h5 class="rcard__title">@recipe.Title</h5>
+                            <p class="rcard__desc">
+                                @(recipe.Description?.Length > 90 ? recipe.Description.Substring(0, 90) + "…" : recipe.Description)
+                            </p>
+
+                            <div class="rcard__meta">
+                                <span class="rcard__meta-item">
+                                    <i class="bi bi-clock"></i> @recipe.TimeDisplay
+                                </span>
+                                <span class="rcard__meta-item">
+                                    <i class="bi bi-people"></i> @recipe.Servings
+                                </span>
+                                <span class="rcard__meta-item rcard__meta-item--rating">
+                                    ⭐ @recipe.AverageRating.ToString("F1")
+                                    <span class="rcard__review-count">(@recipe.ReviewCount)</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.Paging.TotalPages > 1)
+    {
+        <nav class="mt-5">
+            <ul class="pagination justify-content-center">
+                @foreach (var pageNum in Model.Paging.GetPageRange())
+                {
+                    <li class="page-item @(pageNum == Model.Paging.CurrentPage ? "active" : "")">
+                        <a href="#" class="page-link" data-page="@pageNum">@pageNum</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="alert alert-info mt-3">
+        No recipes found.
+    </div>
+}

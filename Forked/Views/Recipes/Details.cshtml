@@ -1,0 +1,1275 @@
+﻿@model Forked.Models.ViewModels.Recipes.RecipeDetailViewModel
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<style>
+    :root {
+        --brand: #e85a2a;
+        --brand-dk: #c44a1e;
+        --gold: #f5c842;
+        --ink: #1e1e1e;
+        --mid: #5a5a5a;
+        --muted: #7a7a7a;
+        --rule: #e0dbd5;
+        --surface: #faf8f5;
+        --card: #fff;
+        --chip-bg: #f4f0eb;
+    }
+
+    .detail-hero {
+        position: relative;
+        margin-bottom: 3rem;
+    }
+
+    .detail-hero__gallery {
+        position: relative;
+        width: 100%;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        background: var(--chip-bg);
+        max-height: 520px;
+    }
+
+    .gallery-track {
+        display: flex;
+        transition: transform 420ms cubic-bezier(.4,0,.2,1);
+        height: 520px;
+    }
+
+        .gallery-track img {
+            flex-shrink: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .gallery-placeholder {
+        width: 100%;
+        height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 5rem;
+        background: var(--chip-bg);
+        border-radius: 1.25rem;
+    }
+
+    .gallery-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.92);
+        border: 1.5px solid var(--rule);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: var(--ink);
+        transition: all 200ms ease;
+        z-index: 2;
+    }
+
+        .gallery-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+        }
+
+    .gallery-btn--prev {
+        left: 0.9rem;
+    }
+
+    .gallery-btn--next {
+        right: 0.9rem;
+    }
+
+    .gallery-dots {
+        position: absolute;
+        bottom: 0.85rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.4rem;
+        z-index: 2;
+    }
+
+    .gallery-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.5);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: all 200ms ease;
+    }
+
+        .gallery-dot.active {
+            background: #fff;
+            transform: scale(1.3);
+        }
+
+    .detail-meta {
+        padding: 2rem 0 0;
+    }
+
+    .detail-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 100px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .detail-badge--forked {
+        background: rgba(232,90,42,0.1);
+        color: var(--brand);
+    }
+
+    .detail-badge--original {
+        background: rgba(61,90,71,0.1);
+        color: #3d5a47;
+    }
+
+    .detail-badge--author {
+        background: var(--chip-bg);
+        color: var(--muted);
+        transition: color 150ms ease, background 150ms ease;
+    }
+
+        .detail-badge--author:hover {
+            background: #ede8e1;
+            color: var(--ink);
+        }
+
+    .detail-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        margin: 0 0 1rem;
+    }
+
+    .detail-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.88rem;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+        .detail-stat i {
+            color: var(--brand);
+        }
+
+    .detail-stat--rating {
+        color: var(--ink);
+    }
+
+        .detail-stat--rating .stars {
+            color: var(--gold);
+        }
+
+    .detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .act-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.55rem 1.2rem;
+        border-radius: 0.5rem;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 200ms ease;
+        white-space: nowrap;
+    }
+
+    .act-btn--primary {
+        background: var(--brand);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(232,90,42,0.28);
+    }
+
+        .act-btn--primary:hover {
+            background: var(--brand-dk);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .act-btn--ghost {
+        background: var(--chip-bg);
+        color: var(--ink);
+        border-color: var(--rule);
+    }
+
+        .act-btn--ghost:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+        }
+
+    .act-btn--danger {
+        background: #fff1ef;
+        color: #c0392b;
+        border-color: #fad3cc;
+    }
+
+        .act-btn--danger:hover {
+            background: #c0392b;
+            color: #fff;
+            border-color: #c0392b;
+        }
+
+    .act-btn--fav {
+        background: #fff0f5;
+        color: #e84393;
+        border-color: #ffd6e8;
+    }
+
+        .act-btn--fav:hover {
+            background: #e84393;
+            color: #fff;
+            border-color: #e84393;
+        }
+
+    .act-btn--edit {
+        background: #fffbeb;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+
+        .act-btn--edit:hover {
+            background: #b45309;
+            color: #fff;
+            border-color: #b45309;
+        }
+
+    /* Unauthenticated prompt */
+    .auth-prompt {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--muted);
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.5rem;
+        padding: 0.55rem 1.1rem;
+    }
+
+        .auth-prompt a {
+            color: var(--brand);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+            .auth-prompt a:hover {
+                text-decoration: underline;
+            }
+
+    .fork-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.1rem;
+        font-size: 0.88rem;
+        color: var(--mid);
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+        .fork-banner i {
+            color: var(--brand);
+        }
+
+    .fork-banner__recipe-link {
+        color: var(--ink);
+        font-weight: 800;
+        text-decoration: none;
+        transition: color 150ms ease;
+    }
+
+        .fork-banner__recipe-link:hover {
+            color: var(--brand);
+            text-decoration: underline;
+        }
+
+    .fork-banner__author-link {
+        color: var(--brand);
+        font-weight: 700;
+        text-decoration: none;
+        transition: opacity 150ms ease;
+    }
+
+        .fork-banner__author-link:hover {
+            opacity: 0.75;
+            text-decoration: underline;
+        }
+
+    .time-chips {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+
+    .time-chip {
+        flex: 1;
+        min-width: 120px;
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        text-align: center;
+    }
+
+    .time-chip__label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .time-chip__value {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1;
+    }
+
+    .time-chip__unit {
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .time-chip--total {
+        border-color: var(--brand);
+    }
+
+        .time-chip--total .time-chip__value {
+            color: var(--brand);
+        }
+
+    .detail-description {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: var(--mid);
+        margin-bottom: 2.5rem;
+        max-width: 72ch;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 768px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .section-card {
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .section-card__header {
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1.5px solid var(--rule);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .section-card__header h3 {
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            margin: 0;
+        }
+
+    .section-card__header-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--brand);
+        flex-shrink: 0;
+    }
+
+    .section-card__body {
+        padding: 1.25rem;
+    }
+
+    .ingredient-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .ingredient-list li {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid var(--rule);
+            font-size: 0.9rem;
+            color: var(--ink);
+        }
+
+            .ingredient-list li:last-child {
+                border-bottom: none;
+            }
+
+            .ingredient-list li::before {
+                content: '';
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: var(--brand);
+                flex-shrink: 0;
+                margin-top: 0.4rem;
+            }
+
+    .step-item {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .step-num {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+
+    .step-content__title {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: var(--ink);
+        margin: 0 0 0.4rem;
+    }
+
+    .step-content__text {
+        font-size: 0.9rem;
+        color: var(--mid);
+        line-height: 1.7;
+        margin: 0 0 0.75rem;
+    }
+
+    /* ── THUMBNAIL GRID (shared by steps + reviews) ── */
+    .thumb-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .thumb {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        border: 1.5px solid var(--rule);
+        cursor: zoom-in;
+        transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    }
+
+        .thumb:hover {
+            transform: scale(1.07);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            border-color: var(--brand);
+        }
+
+    .thumb--sm {
+        width: 68px;
+        height: 68px;
+    }
+
+    /* ── LIGHTBOX ── */
+    .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: rgba(10,10,10,0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 220ms ease;
+    }
+
+        .lightbox.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+    .lightbox__img {
+        max-width: min(92vw, 1100px);
+        max-height: 88vh;
+        border-radius: 0.75rem;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+        transform: scale(0.93);
+        transition: transform 220ms cubic-bezier(.34,1.56,.64,1);
+        object-fit: contain;
+    }
+
+    .lightbox.open .lightbox__img {
+        transform: scale(1);
+    }
+
+    .lightbox__close {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.12);
+        border: 1.5px solid rgba(255,255,255,0.22);
+        color: #fff;
+        font-size: 1.1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 150ms ease;
+    }
+
+        .lightbox__close:hover {
+            background: rgba(255,255,255,0.28);
+        }
+
+    .lightbox__nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.12);
+        border: 1.5px solid rgba(255,255,255,0.22);
+        color: #fff;
+        font-size: 1.3rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 150ms ease;
+    }
+
+        .lightbox__nav:hover {
+            background: rgba(255,255,255,0.28);
+        }
+
+    .lightbox__nav--prev {
+        left: 1.25rem;
+    }
+
+    .lightbox__nav--next {
+        right: 1.25rem;
+    }
+
+    .lightbox__counter {
+        position: absolute;
+        bottom: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.55);
+        letter-spacing: 0.05em;
+    }
+
+    .reviews-section {
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .reviews-header {
+        background: var(--chip-bg);
+        border-bottom: 1.5px solid var(--rule);
+        padding: 1.1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .reviews-header h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0;
+        }
+
+            .reviews-header h3 span {
+                color: var(--brand);
+            }
+
+    .reviews-body {
+        padding: 1.5rem;
+    }
+
+    #reviewForm {
+        background: var(--surface);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .form-label-upper {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    .review-card {
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.25rem;
+        margin-bottom: 1rem;
+        background: var(--card);
+        transition: border-color 200ms ease;
+    }
+
+        .review-card:hover {
+            border-color: #d0cac4;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+    .review-card__top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .review-card__name {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--ink);
+        text-decoration: none;
+        transition: color 150ms ease;
+    }
+
+        .review-card__name:hover {
+            color: var(--brand);
+        }
+
+    .review-card__stars {
+        font-size: 0.95rem;
+        margin-top: 0.2rem;
+    }
+
+    .review-card__date {
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+
+    .review-card__body {
+        font-size: 0.9rem;
+        color: var(--mid);
+        line-height: 1.65;
+        margin: 0.5rem 0 0;
+    }
+
+    .review-card__images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+    }
+
+    .review-card__actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .review-action-btn {
+        background: none;
+        border: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: none;
+        transition: color 200ms ease;
+    }
+
+    .review-action-btn--edit {
+        color: var(--muted);
+    }
+
+        .review-action-btn--edit:hover {
+            color: var(--ink);
+        }
+
+    .review-action-btn--delete {
+        color: var(--brand);
+    }
+
+        .review-action-btn--delete:hover {
+            color: var(--brand-dk);
+        }
+
+    .review-action-sep {
+        color: var(--rule);
+        font-size: 0.8rem;
+    }
+
+    .load-more-btn {
+        display: block;
+        width: 100%;
+        padding: 0.65rem;
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--brand);
+        cursor: pointer;
+        text-align: center;
+        transition: all 200ms ease;
+        margin-top: 1rem;
+    }
+
+        .load-more-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+        }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 200ms ease;
+        margin-bottom: 2rem;
+    }
+
+        .back-link:hover {
+            color: var(--brand);
+        }
+</style>
+
+<!-- ── LIGHTBOX OVERLAY ── -->
+<div class="lightbox" id="lightbox" onclick="lightboxBackdrop(event)">
+    <button class="lightbox__close" onclick="closeLightbox()" aria-label="Close">✕</button>
+    <button class="lightbox__nav lightbox__nav--prev" onclick="lightboxNav(-1,event)" aria-label="Previous">‹</button>
+    <img class="lightbox__img" id="lightboxImg" src="" alt="Preview" />
+    <button class="lightbox__nav lightbox__nav--next" onclick="lightboxNav(1,event)" aria-label="Next">›</button>
+    <div class="lightbox__counter" id="lightboxCounter"></div>
+</div>
+
+<div class="my-5">
+
+    <a asp-action="Index" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Recipes
+    </a>
+
+    <!-- ── HERO ── -->
+    <div class="detail-hero">
+        @if (Model.ImagePaths.Any())
+        {
+            <div class="detail-hero__gallery">
+                <div class="gallery-track" id="galleryTrack">
+                    @foreach (var img in Model.ImagePaths)
+                    {
+                        <img src="@img" alt="@Model.Title" />
+                    }
+                </div>
+                @if (Model.ImagePaths.Count > 1)
+                {
+                    <button class="gallery-btn gallery-btn--prev" onclick="galleryMove(-1)" aria-label="Previous">‹</button>
+                    <button class="gallery-btn gallery-btn--next" onclick="galleryMove(1)" aria-label="Next">›</button>
+                    <div class="gallery-dots" id="galleryDots">
+                        @for (int i = 0; i < Model.ImagePaths.Count; i++)
+                        {
+                            <button class="gallery-dot @(i == 0 ? "active" : "")"
+                                    onclick="galleryGoto(@i)" aria-label="Image @(i + 1)"></button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gallery-placeholder">🍽️</div>
+        }
+
+        <div class="detail-meta">
+            <div class="detail-eyebrow">
+                @if (Model.IsForked)
+                {
+                    <span class="detail-badge detail-badge--forked">🍴 Forked</span>
+                }
+                else
+                {
+                    <span class="detail-badge detail-badge--original">✨ Original</span>
+                }
+                <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.AuthorName"
+                   class="detail-badge detail-badge--author" style="text-decoration:none;">
+                    <i class="bi bi-person"></i> @Model.AuthorName
+                </a>
+                <span class="detail-badge detail-badge--author">
+                    <i class="bi bi-calendar3"></i> @Model.CreatedAt.ToString("MMM yyyy")
+                </span>
+            </div>
+
+            <h1 class="detail-title">@Model.Title</h1>
+
+            <div class="detail-stats">
+                <div class="detail-stat detail-stat--rating">
+                    <span class="stars">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <span style="color:@(i <= Math.Round(Model.AverageRating) ? "#f5c842" : "#e0dbd5");">★</span>
+                        }
+                    </span>
+                    <strong>@Model.AverageRating.ToString("F1")</strong>
+                    <span style="color:var(--muted);font-weight:400;">(@Model.ReviewCount reviews)</span>
+                </div>
+                <div class="detail-stat"><i class="bi bi-people"></i> @Model.Servings servings</div>
+                @if (Model.ForkCount > 0)
+                {
+                    <div class="detail-stat"><i class="bi bi-diagram-3"></i> Forked @Model.ForkCount time@(Model.ForkCount > 1 ? "s" : "")</div>
+                }
+            </div>
+
+            <!-- ── ACTION BUTTONS — authenticated users only ── -->
+            <div class="detail-actions">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-action="Fork" asp-route-id="@Model.Id" class="act-btn act-btn--ghost">
+                        <i class="bi bi-diagram-3"></i> Fork Recipe
+                    </a>
+
+                    @if (Model.IsAuthor || User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="act-btn act-btn--edit">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="act-btn act-btn--danger"
+                                    onclick="return confirm('Are you sure you want to delete this recipe?')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.IsFavourite)
+                    {
+                        <form asp-action="UnfavoriteRecipe" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="act-btn act-btn--fav">
+                                <i class="bi bi-heart-fill"></i> Unfavorite
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form asp-action="FavoriteRecipe" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <button type="submit" class="act-btn act-btn--fav">
+                                <i class="bi bi-heart"></i> Favorite
+                            </button>
+                        </form>
+                    }
+                }
+                else
+                {
+                    <span class="auth-prompt">
+                        <i class="bi bi-lock"></i>
+                        <a asp-area="Identity" asp-page="/Account/Login">Sign in</a>&nbsp;to fork, favourite or review this recipe
+                    </span>
+                }
+            </div>
+
+            @if (Model.IsForked)
+            {
+                <div class="fork-banner">
+                    <i class="bi bi-diagram-3"></i>
+                    Forked from
+                    <a asp-controller="Recipes" asp-action="Details" asp-route-id="@Model.ParentRecipeId"
+                       class="fork-banner__recipe-link">@Model.ParentRecipeTitle</a>
+                    by
+                    <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.ParentRecipeAuthorName"
+                       class="fork-banner__author-link">@Model.ParentRecipeAuthorName</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── TIME CHIPS ── -->
+    <div class="time-chips">
+        <div class="time-chip">
+            <div class="time-chip__label">Prep</div>
+            <div class="time-chip__value">@(Model.PreparationTimeInMinutes ?? 0)</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip">
+            <div class="time-chip__label">Cook</div>
+            <div class="time-chip__value">@(Model.CookingTimeInMinutes ?? 0)</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip time-chip--total">
+            <div class="time-chip__label">Total</div>
+            <div class="time-chip__value">@Model.TotalTimeInMinutes</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip">
+            <div class="time-chip__label">Serves</div>
+            <div class="time-chip__value">@Model.Servings</div>
+            <div class="time-chip__unit">people</div>
+        </div>
+    </div>
+
+    <p class="detail-description">@Model.Description</p>
+
+    <!-- ── INGREDIENTS + STEPS ── -->
+    <div class="detail-grid">
+
+        <div class="section-card">
+            <div class="section-card__header">
+                <div class="section-card__header-dot"></div>
+                <h3>Ingredients</h3>
+            </div>
+            <div class="section-card__body">
+                <ul class="ingredient-list">
+                    @foreach (var ingredient in Model.Ingredients)
+                    {
+                        <li>@ingredient.DisplayText</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-card__header">
+                <div class="section-card__header-dot"></div>
+                <h3>Instructions</h3>
+            </div>
+            <div class="section-card__body">
+                @foreach (var step in Model.Steps)
+                {
+                    <div class="step-item">
+                        <div class="step-num">@step.StepNumber</div>
+                        <div>
+                            @if (!string.IsNullOrEmpty(step.StepName))
+                            {
+                                <p class="step-content__title">@step.StepName</p>
+                            }
+                            <p class="step-content__text">@step.Instruction</p>
+                            @if (step.ImagePaths.Any())
+                            {
+                                <!-- thumb-grid lets JS collect siblings for multi-image lightbox -->
+                                <div class="thumb-grid">
+                                    @foreach (var img in step.ImagePaths)
+                                    {
+                                        <img src="@img" class="thumb" alt="Step image"
+                                             onclick="openLightbox(this)" />
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ── REVIEWS ── -->
+    <div class="reviews-section">
+        <div class="reviews-header">
+            <h3>Reviews <span>(@Model.ReviewCount)</span></h3>
+            @if (User.Identity?.IsAuthenticated == true && !Model.HasUserReviewed)
+            {
+                <button class="act-btn act-btn--primary" style="font-size:0.82rem;padding:0.45rem 1rem;"
+                        onclick="toggleReviewForm()">
+                    ✏️ Write a Review
+                </button>
+            }
+        </div>
+
+        <div class="reviews-body">
+            @if (User.Identity?.IsAuthenticated == true && !Model.HasUserReviewed)
+            {
+                <div id="reviewForm">
+                    <form asp-controller="Reviews" asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="RecipeId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label-upper">Rating</label>
+                            <div class="star-picker d-flex gap-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <label class="star-label" style="cursor:pointer;font-size:1.75rem;color:#e0dbd5;transition:color 150ms ease;">
+                                        <input type="radio" name="Rating" value="@i" style="display:none;" required />★
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-upper">Your Review</label>
+                            <textarea name="Message" class="form-control" rows="3" maxlength="500"
+                                  placeholder="Share your thoughts on this recipe…"
+                                  style="border-color:var(--rule);border-radius:0.5rem;font-size:0.92rem;"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label-upper">Photos (optional)</label>
+                            <input type="file" name="Images" multiple accept="image/*" class="form-control"
+                                   style="border-color:var(--rule);border-radius:0.5rem;" />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="act-btn act-btn--primary">Submit Review</button>
+                            <button type="button" class="act-btn act-btn--ghost" onclick="toggleReviewForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            }
+
+            <div id="reviewList"></div>
+            <button class="load-more-btn" id="loadMoreBtn" onclick="loadReviews()" style="display:none;">Load more reviews</button>
+            <div id="noReviews" style="display:none;">
+                <p style="color:var(--muted);font-size:0.92rem;margin:0;">No reviews yet. Be the first to review this recipe!</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // ── GALLERY ──────────────────────────────────────────────
+        let galleryIndex = 0;
+        const totalImages = @Model.ImagePaths.Count;
+
+        function galleryGoto(idx) {
+            galleryIndex = idx;
+            document.getElementById("galleryTrack").style.transform = `translateX(-${idx * 100}%)`;
+            document.querySelectorAll(".gallery-dot").forEach((d, i) => d.classList.toggle("active", i === idx));
+        }
+        function galleryMove(dir) { galleryGoto((galleryIndex + dir + totalImages) % totalImages); }
+
+        // ── LIGHTBOX ─────────────────────────────────────────────
+        let lbSrcs = [], lbIdx = 0;
+
+        function openLightbox(el) {
+            // Gather siblings from the same thumb-grid or review-card__images container
+            const parent = el.closest('.thumb-grid') ?? el.closest('.review-card__images');
+            lbSrcs = parent ? Array.from(parent.querySelectorAll('img')).map(i => i.src) : [el.src];
+            lbIdx  = lbSrcs.indexOf(el.src);
+            if (lbIdx < 0) lbIdx = 0;
+            renderLb();
+            document.getElementById("lightbox").classList.add("open");
+            document.body.style.overflow = "hidden";
+        }
+
+        function renderLb() {
+            document.getElementById("lightboxImg").src = lbSrcs[lbIdx];
+            document.getElementById("lightboxCounter").textContent =
+                lbSrcs.length > 1 ? `${lbIdx + 1} / ${lbSrcs.length}` : "";
+            document.querySelectorAll(".lightbox__nav").forEach(b =>
+                b.style.display = lbSrcs.length > 1 ? "flex" : "none");
+        }
+
+        function closeLightbox() {
+            document.getElementById("lightbox").classList.remove("open");
+            document.body.style.overflow = "";
+        }
+
+        function lightboxBackdrop(e) {
+            if (e.target === document.getElementById("lightbox")) closeLightbox();
+        }
+
+        function lightboxNav(dir, e) {
+            e.stopPropagation();
+            lbIdx = (lbIdx + dir + lbSrcs.length) % lbSrcs.length;
+            renderLb();
+        }
+
+        document.addEventListener("keydown", e => {
+            const lb = document.getElementById("lightbox");
+            if (lb.classList.contains("open")) {
+                if (e.key === "Escape")     closeLightbox();
+                if (e.key === "ArrowLeft")  lightboxNav(-1, e);
+                if (e.key === "ArrowRight") lightboxNav(1,  e);
+            } else {
+                if (e.key === "ArrowLeft")  galleryMove(-1);
+                if (e.key === "ArrowRight") galleryMove(1);
+            }
+        });
+
+        // ── REVIEWS ──────────────────────────────────────────────
+        let currentPage = 1, loading = false, exhausted = false;
+        const pageSize = 5, recipeId = @Model.Id;
+
+        async function loadReviews() {
+            if (loading || exhausted) return;
+            loading = true;
+            const btn = document.getElementById("loadMoreBtn");
+            if (btn) btn.textContent = "Loading…";
+
+            const res  = await fetch(`/Reviews/GetPaged?recipeId=${recipeId}&page=${currentPage}&pageSize=${pageSize}`);
+            const data = await res.json();
+            const list = document.getElementById("reviewList");
+
+            if (data.items.length === 0 && currentPage === 1) {
+                document.getElementById("noReviews").style.display = "block";
+                if (btn) btn.style.display = "none";
+                loading = false;
+                return;
+            }
+
+            data.items.forEach(r => {
+                const stars = Array.from({length:5}, (_,i) =>
+                    `<span style="color:${i < r.rating ? '#f5c842' : '#e0dbd5'};">★</span>`).join("");
+
+                // Review images — zoomable with lightbox
+                const images = r.imagePaths?.length
+                    ? `<div class="review-card__images">
+                        ${r.imagePaths.map(src =>
+                            `<img src="${src}" class="thumb thumb--sm" alt="Review image"
+                                  onclick="openLightbox(this)" />`
+                        ).join("")}
+                       </div>`
+                    : "";
+
+                const actions = r.isCurrentUser
+                    ? `<div class="review-card__actions">
+                        <a href="/Reviews/Edit/${r.id}" class="review-action-btn review-action-btn--edit">✏️ Edit</a>
+                        <span class="review-action-sep">|</span>
+                        <form action="/Reviews/Delete/${r.id}" method="post" style="display:inline;">
+                            <input type="hidden" name="__RequestVerificationToken" value="${getToken()}" />
+                            <input type="hidden" name="recipeId" value="${recipeId}" />
+                            <button type="submit" class="review-action-btn review-action-btn--delete"
+                                    onclick="return confirm('Delete this review?')">🗑️ Delete</button>
+                        </form>
+                       </div>`
+                    : "";
+
+                const nameHtml = r.userId
+                    ? `<a href="/Users/Details/${r.displayName}" class="review-card__name">${r.displayName}</a>`
+                    : `<span class="review-card__name">${r.displayName}</span>`;
+
+                const card = document.createElement("div");
+                card.className = "review-card";
+                card.innerHTML = `
+                    <div class="review-card__top">
+                        <div>${nameHtml}<div class="review-card__stars">${stars}</div></div>
+                        <span class="review-card__date">${fmtDate(r.createdAt)}</span>
+                    </div>
+                    <p class="review-card__body">${r.message}</p>
+                    ${images}${actions}`;
+                list.appendChild(card);
+            });
+
+            currentPage++;
+            const hasMore = currentPage <= data.totalPages;
+            if (btn) { btn.style.display = hasMore ? "block" : "none"; btn.textContent = "Load more reviews"; }
+            if (!hasMore) exhausted = true;
+            loading = false;
+        }
+
+        function fmtDate(iso) { return new Date(iso).toLocaleDateString("en-GB", {day:"numeric",month:"short",year:"numeric"}); }
+        function getToken()   { return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ""; }
+        function toggleReviewForm() {
+            const f = document.getElementById("reviewForm");
+            f.style.display = f.style.display === "none" ? "block" : "none";
+        }
+
+        document.querySelectorAll(".star-label").forEach((label, idx, all) => {
+            label.addEventListener("mouseenter", () => all.forEach((l,i) => l.style.color = i<=idx ? "#f5c842":"#e0dbd5"));
+            label.addEventListener("mouseleave", () => {
+                const ci = (document.querySelector(".star-label input:checked")?.value ?? 0) - 1;
+                all.forEach((l,i) => l.style.color = i<=ci ? "#f5c842":"#e0dbd5");
+            });
+            label.addEventListener("click", () => all.forEach((l,i) => l.style.color = i<=idx ? "#f5c842":"#e0dbd5"));
+        });
+
+        loadReviews();
+    </script>
+}

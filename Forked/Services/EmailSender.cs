@@ -1,16 +1,19 @@
 ﻿using MimeKit;
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using Forked.Services.Interfaces;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Forked.Services
 {
     public class EmailSender : IEmailSender
     {
         private readonly IConfiguration _config;
-        public EmailSender(IConfiguration config)
+        private readonly IWebHostEnvironment _environment;
+
+        public EmailSender(IConfiguration config, IWebHostEnvironment environment)
         {
             _config = config;
+            _environment = environment;
         }
 
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
@@ -19,7 +22,6 @@ namespace Forked.Services
             message.From.Add(MailboxAddress.Parse(_config["Smtp:From"]));
             message.To.Add(MailboxAddress.Parse(email));
             message.Subject = subject;
-
             message.Body = new TextPart("html")
             {
                 Text = htmlMessage
@@ -34,9 +36,11 @@ namespace Forked.Services
 
         public async Task SendTemplateEmailAsync(string email, string subject, string templatePath, Dictionary<string, string> replacements)
         {
-            string html = await File.ReadAllTextAsync(templatePath);
+            // Build the full path using the web root or content root
+            var fullPath = Path.Combine(_environment.ContentRootPath, "EmailTemplates", templatePath);
 
-            // Replace all placeholders like {{PLACEHOLDER}}
+            string html = await File.ReadAllTextAsync(fullPath);
+
             foreach (var pair in replacements)
             {
                 html = html.Replace(pair.Key, pair.Value);

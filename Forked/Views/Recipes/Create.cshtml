@@ -1,0 +1,243 @@
+﻿@model Forked.Models.ViewModels.Recipes.CreateRecipeViewModel
+
+@{
+    ViewData["Title"] = "Create Recipe";
+}
+
+<div class="my-4">
+    <h2 class="mb-4">Create Recipe</h2>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        @if (ViewBag.DebugErrors != null)
+        {
+            <div class="alert alert-danger">
+                <strong>ModelState Errors:</strong> @ViewBag.DebugErrors
+            </div>
+        }
+
+        <!-- Title -->
+        <div class="mb-3">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <!-- Servings, Prep, Cooking -->
+        <div class="mb-3 row">
+            <div class="col-md-4">
+                <label asp-for="Servings" class="form-label"></label>
+                <input asp-for="Servings" type="number" class="form-control" />
+                <span asp-validation-for="Servings" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="PreparationTimeInMinutes" class="form-label"></label>
+                <input asp-for="PreparationTimeInMinutes" type="number" class="form-control" />
+                <span asp-validation-for="PreparationTimeInMinutes" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="CookingTimeInMinutes" class="form-label"></label>
+                <input asp-for="CookingTimeInMinutes" type="number" class="form-control" />
+                <span asp-validation-for="CookingTimeInMinutes" class="text-danger"></span>
+            </div>
+        </div>
+
+        <!-- Recipe Images -->
+        <div class="mb-3">
+            <label asp-for="ImageFiles" class="form-label">Recipe Images</label>
+            <input asp-for="ImageFiles" type="file" multiple class="form-control" />
+            <span asp-validation-for="ImageFiles" class="text-danger"></span>
+        </div>
+
+        <!-- Ingredients -->
+        <h3 class="mt-4 mb-3">Ingredients</h3>
+        <div class="mb-3">
+            <div class="input-group mb-2">
+                <input type="text" id="ingredientInput" class="form-control" placeholder="e.g. 2 cups flour, sifted" />
+                <button type="button" class="btn btn-outline-primary" onclick="addIngredient()">+</button>
+            </div>
+        </div>
+        <div id="ingredientPreviewList" class="mb-3"></div>
+
+        <!-- Steps -->
+        <h3 class="mt-4 mb-3">Steps</h3>
+        <div class="mb-3">
+            <div class="mb-2">
+                <div class="input-group mb-2">
+                    <input type="number" id="stepNumberInput" class="form-control" placeholder="Step #" style="max-width: 100px" />
+                    <input type="text" id="stepNameInput" class="form-control" placeholder="Step Name" />
+                </div>
+                <textarea id="stepInstructionInput" class="form-control mb-2" placeholder="Instruction" rows="3"></textarea>
+                <div class="mb-2">
+                    <label class="form-label">Step Images</label>
+                    <input type="file" id="stepImageInput" class="form-control" multiple accept="image/*" />
+                </div>
+                <div id="stepImagePreview" class="d-flex flex-wrap gap-2 mb-2"></div>
+                <button type="button" class="btn btn-outline-primary" onclick="addStep()">+ Add Step</button>
+            </div>
+        </div>
+        <div id="stepPreviewList" class="mb-3"></div>
+
+        <button type="submit" class="btn btn-success mt-3">Create Recipe</button>
+    </form>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        // ---------------- Ingredients ----------------
+        let ingredientIndex = 0;
+
+        async function addIngredient() {
+            const input = document.getElementById("ingredientInput");
+            const value = input.value.trim();
+            if (!value) return;
+
+            const response = await fetch('@Url.Action("ParseIngredient")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(value)
+            });
+
+            if (!response.ok) {
+                alert("Could not parse ingredient.");
+                return;
+            }
+
+            const data = await response.json();
+            const container = document.getElementById("ingredientPreviewList");
+
+            const item = document.createElement("div");
+            item.className = "card p-2 mb-2";
+
+            item.innerHTML = `
+                <div><strong>${data.formatted}</strong></div>
+                <input type="hidden" name="ParsedIngredients[${ingredientIndex}].Quantity" value="${data.quantity}" />
+                <input type="hidden" name="ParsedIngredients[${ingredientIndex}].Unit" value="${data.unit}" />
+                <input type="hidden" name="ParsedIngredients[${ingredientIndex}].Name" value="${data.name}" />
+                <input type="hidden" name="ParsedIngredients[${ingredientIndex}].Preparation" value="${data.preparation}" />
+                <button type="button" class="btn btn-sm btn-danger mt-1" onclick="removeIngredient(this)">Remove</button>
+            `;
+
+            container.appendChild(item);
+            ingredientIndex++;
+            input.value = "";
+            input.focus();
+        }
+
+        function removeIngredient(button) {
+            const item = button.closest("div.card");
+            if (item) item.remove();
+        }
+
+        // ---------------- Steps ----------------
+        let stepIndex = 0;
+        let pendingStepFiles = [];
+
+        document.getElementById("stepImageInput").addEventListener("change", function () {
+            pendingStepFiles = Array.from(this.files);
+
+            const preview = document.getElementById("stepImagePreview");
+            preview.innerHTML = "";
+
+            pendingStepFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    img.style.cssText = "width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;";
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        function addStep() {
+            const numberInput = document.getElementById("stepNumberInput");
+            const nameInput = document.getElementById("stepNameInput");
+            const instructionInput = document.getElementById("stepInstructionInput");
+            const imageInput = document.getElementById("stepImageInput");
+
+            const number = numberInput.value || stepIndex + 1;
+            const name = nameInput.value;
+            const instruction = instructionInput.value;
+
+            if (!instruction) {
+                alert("Step instruction is required");
+                return;
+            }
+
+            const container = document.getElementById("stepPreviewList");
+            const item = document.createElement("div");
+            item.className = "card p-2 mb-2";
+
+            let imagePreviewHtml = "";
+            pendingStepFiles.forEach(file => {
+                const objectUrl = URL.createObjectURL(file);
+                imagePreviewHtml += `<img src="${objectUrl}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd;" />`;
+            });
+
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong>Step ${number}${name ? ': ' + name : ''}</strong>
+                        <p class="mb-1 mt-1">${instruction}</p>
+                        <div class="d-flex flex-wrap gap-2 mt-1">${imagePreviewHtml}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger ms-2" onclick="removeStep(this)">Remove</button>
+                </div>
+                <input type="hidden" name="Steps[${stepIndex}].StepNumber" value="${number}" />
+                <input type="hidden" name="Steps[${stepIndex}].StepName" value="${name}" />
+                <input type="hidden" name="Steps[${stepIndex}].Instruction" value="${instruction}" />
+                <input type="file" name="Steps[${stepIndex}].ImageFiles" multiple style="display:none" class="step-file-input" />
+            `;
+
+            container.appendChild(item);
+
+            if (pendingStepFiles.length > 0) {
+                const hiddenFileInput = item.querySelector(".step-file-input");
+                const dataTransfer = new DataTransfer();
+                pendingStepFiles.forEach(file => dataTransfer.items.add(file));
+                hiddenFileInput.files = dataTransfer.files;
+            }
+
+            stepIndex++;
+
+            numberInput.value = "";
+            nameInput.value = "";
+            instructionInput.value = "";
+            imageInput.value = "";
+            pendingStepFiles = [];
+            document.getElementById("stepImagePreview").innerHTML = "";
+        }
+
+        function removeStep(button) {
+            const item = button.closest("div.card");
+            if (item) item.remove();
+            rebuildStepIndexes();
+        }
+
+        function rebuildStepIndexes() {
+            const container = document.getElementById("stepPreviewList");
+            const cards = container.querySelectorAll("div.card");
+            cards.forEach((card, i) => {
+                card.querySelectorAll("input[type=hidden]").forEach(input => {
+                    const property = input.name.split('.').pop();
+                    input.name = `Steps[${i}].${property}`;
+                });
+                const fileInput = card.querySelector(".step-file-input");
+                if (fileInput) fileInput.name = `Steps[${i}].ImageFiles`;
+            });
+            stepIndex = cards.length;
+        }
+    </script>
+}

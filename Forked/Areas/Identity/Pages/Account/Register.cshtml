@@ -1,0 +1,420 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<style>
+    :root {
+        --brand: #e85a2a;
+        --brand-dk: #c44a1e;
+        --gold: #f5c842;
+        --ink: #1e1e1e;
+        --mid: #5a5a5a;
+        --muted: #7a7a7a;
+        --rule: #e0dbd5;
+        --surface: #faf8f5;
+        --chip-bg: #f4f0eb;
+        --card: #ffffff;
+    }
+
+    /* ── PAGE SHELL ─────────────────────────────────────── */
+    .register-page {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        min-height: calc(100vh - 120px);
+        margin: 0 -12px;
+        animation: fadeUp 450ms ease-out both;
+    }
+
+    @@keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ── LEFT PANEL ────────────────────────── */
+    .register-panel {
+        background: var(--chip-bg);
+        border-right: 1.5px solid var(--rule);
+        padding: 4rem 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .register-panel__bg {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 70% 60% at 20% 30%, rgba(232,90,42,0.09) 0%, transparent 70%), radial-gradient(ellipse 50% 50% at 80% 80%, rgba(245,200,66,0.07) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .register-panel__eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(232,90,42,0.1);
+        color: var(--brand);
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding: 0.3rem 0.85rem;
+        border-radius: 100px;
+        margin-bottom: 1.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        width: fit-content;
+        position: relative;
+    }
+
+    .register-panel__title {
+        font-size: clamp(2rem, 3.5vw, 3rem);
+        font-weight: 900;
+        line-height: 1.1;
+        color: var(--ink);
+        letter-spacing: -0.03em;
+        margin-bottom: 1.25rem;
+        position: relative;
+    }
+
+        .register-panel__title span {
+            color: var(--brand);
+            position: relative;
+            display: inline-block;
+        }
+
+            .register-panel__title span::after {
+                content: '';
+                position: absolute;
+                bottom: 2px;
+                left: 0;
+                right: 0;
+                height: 5px;
+                background: var(--gold);
+                border-radius: 3px;
+                opacity: 0.65;
+            }
+
+    .register-panel__sub {
+        font-size: 1rem;
+        color: var(--mid);
+        line-height: 1.7;
+        max-width: 340px;
+        margin-bottom: 2.5rem;
+        position: relative;
+    }
+
+    .register-panel__cards {
+        position: relative;
+        height: 200px;
+    }
+
+    .rp-card {
+        position: absolute;
+        background: var(--card);
+        border-radius: 0.875rem;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+        padding: 0.75rem 1rem;
+        width: 220px;
+        border: 1.5px solid var(--rule);
+    }
+
+    .rp-card--1 {
+        top: 0;
+        left: 0;
+        transform: rotate(-3deg);
+        z-index: 3;
+    }
+
+    .rp-card--2 {
+        top: 25px;
+        left: 30px;
+        transform: rotate(1.5deg);
+        z-index: 2;
+    }
+
+    .rp-card--3 {
+        top: 50px;
+        left: 60px;
+        transform: rotate(-1deg);
+        z-index: 1;
+    }
+
+    .rp-card__tag {
+        display: inline-block;
+        background: rgba(232,90,42,0.12);
+        color: var(--brand);
+        font-size: 0.68rem;
+        font-weight: 700;
+        padding: 0.12rem 0.5rem;
+        border-radius: 100px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.3rem;
+    }
+
+    .rp-card__name {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0;
+    }
+
+    .rp-card__meta {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+    }
+
+    /* ── RIGHT PANEL ─────────────────────────────── */
+    .register-form-panel {
+        padding: 4rem 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: var(--card);
+    }
+
+    .register-form__heading {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--ink);
+        letter-spacing: -0.03em;
+        margin-bottom: 0.35rem;
+    }
+
+    .register-form__sub {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 2rem;
+    }
+
+        .register-form__sub a {
+            color: var(--brand);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+            .register-form__sub a:hover {
+                text-decoration: underline;
+            }
+
+    .field-group {
+        margin-bottom: 1.1rem;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 0.4rem;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.7rem 1rem;
+        border: 1.5px solid var(--rule);
+        border-radius: 0.5rem;
+        font-size: 0.92rem;
+        color: var(--ink);
+        background: var(--surface);
+        transition: border-color 150ms ease, box-shadow 150ms ease;
+        outline: none;
+    }
+
+        .field-input:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(232,90,42,0.12);
+            background: var(--card);
+        }
+
+        .field-input.input-validation-error {
+            border-color: #e53935;
+        }
+
+    .field-error {
+        font-size: 0.78rem;
+        color: #e53935;
+        margin-top: 0.3rem;
+        display: block;
+    }
+
+    .register-alert {
+        background: #fff1f0;
+        border: 1.5px solid #fad3cc;
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #c0392b;
+        margin-bottom: 1.25rem;
+    }
+
+    .register-submit {
+        width: 100%;
+        padding: 0.78rem;
+        background: var(--brand);
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 700;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+        box-shadow: 0 3px 14px rgba(232,90,42,0.28);
+        margin-top: 0.5rem;
+        letter-spacing: 0.01em;
+    }
+
+        .register-submit:hover {
+            background: var(--brand-dk);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 20px rgba(232,90,42,0.36);
+        }
+
+    .register-divider {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 1.5rem 0;
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+        .register-divider::before, .register-divider::after {
+            content: '';
+            flex: 1;
+            height: 1.5px;
+            background: var(--rule);
+        }
+
+    .ext-btn {
+        width: 100%;
+        padding: 0.65rem;
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--ink);
+        cursor: pointer;
+        transition: border-color 150ms ease, background 150ms ease;
+        margin-bottom: 0.5rem;
+    }
+
+        .ext-btn:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+            background: rgba(232,90,42,0.05);
+        }
+
+    @@media (max-width: 768px) {
+        .register-page {
+            grid-template-columns: 1fr;
+            margin: 0 -12px;
+        }
+
+        .register-panel {
+            padding: 2.5rem 1.5rem;
+            border-right: none;
+            border-bottom: 1.5px solid var(--rule);
+        }
+
+        .register-panel__cards {
+            display: none;
+        }
+
+        .register-form-panel {
+            padding: 2rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="register-page">
+    <!-- LEFT PANEL -->
+    <div class="register-panel">
+        <div class="register-panel__bg"></div>
+        <div class="register-panel__eyebrow">🍴 Join the community</div>
+        <h2 class="register-panel__title">
+            Your next<br />favourite dish<br />starts <span>here.</span>
+        </h2>
+        <p class="register-panel__sub">
+            Create an account to discover recipes, fork your favourites, and share your own creations with thousands of food lovers.
+        </p>
+        <div class="register-panel__cards">
+            <div class="rp-card rp-card--1"><div class="rp-card__tag">Forked ×3</div><p class="rp-card__name">Lemon Ricotta Pasta</p><div class="rp-card__meta">⭐ 4.8 · 20 min</div></div>
+            <div class="rp-card rp-card--2"><div class="rp-card__tag">Original</div><p class="rp-card__name">Smoky Pulled Chicken</p><div class="rp-card__meta">⭐ 4.9 · 45 min</div></div>
+            <div class="rp-card rp-card--3"><div class="rp-card__tag">Forked ×1</div><p class="rp-card__name">Neapolitan Pizza</p><div class="rp-card__meta">⭐ 5.0 · 90 min</div></div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="register-form-panel">
+        <h1 class="register-form__heading">Create your account</h1>
+        <p class="register-form__sub">
+            Already have one? <a asp-page="/Account/Login" asp-route-returnUrl="@Model.ReturnUrl">Sign in instead →</a>
+        </p>
+
+        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="register-alert" asp-validation-summary="ModelOnly" role="alert"></div>
+            }
+
+            <div class="field-group">
+                <label class="field-label" asp-for="Input.DisplayName">Display name</label>
+                <input asp-for="Input.DisplayName" class="field-input" autocomplete="username" placeholder="e.g. Alice Foodie" />
+                <span asp-validation-for="Input.DisplayName" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" asp-for="Input.Email">Email address</label>
+                <input asp-for="Input.Email" class="field-input" autocomplete="email" placeholder="you@example.com" />
+                <span asp-validation-for="Input.Email" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" asp-for="Input.Password">Password</label>
+                <input asp-for="Input.Password" class="field-input" autocomplete="new-password" placeholder="Min. 6 characters" />
+                <span asp-validation-for="Input.Password" class="field-error"></span>
+            </div>
+
+            <div class="field-group">
+                <label class="field-label" asp-for="Input.ConfirmPassword">Confirm password</label>
+                <input asp-for="Input.ConfirmPassword" class="field-input" autocomplete="new-password" placeholder="Repeat your password" />
+                <span asp-validation-for="Input.ConfirmPassword" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="register-submit">Create account →</button>
+        </form>
+
+        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+        {
+            <div class="register-divider">or continue with</div>
+            <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                @foreach (var provider in Model.ExternalLogins!)
+                {
+                    <button type="submit" class="ext-btn" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
+                        @provider.DisplayName
+                    </button>
+                }
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

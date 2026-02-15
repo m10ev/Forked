@@ -5,11 +5,14 @@ namespace Forked.Models.Domains
 {
     public class User : IdentityUser, IAuditable
     {
-        public string Username { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
         public string? ProfilePicturePath { get; set; }
         public string? Bio { get; set; }
         public ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
         public ICollection<UserFavoriteRecipe> FavoriteRecipes { get; set; } = new List<UserFavoriteRecipe>();
+        public ICollection<UserFollow> Following { get; set; } = new List<UserFollow>();
+        public ICollection<UserFollow> Followers { get; set; } = new List<UserFollow>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
