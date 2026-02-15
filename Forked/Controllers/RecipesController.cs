@@ -205,7 +205,10 @@ namespace Forked.Controllers
             if (user == null)
                 return Unauthorized();
 
-            var recipe = await _recipeService.GetRecipeForEditAsync(id, user.Id);
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isAdmin = roles.Contains("Admin");
+
+            var recipe = await _recipeService.GetRecipeForEditAsync(id, user.Id, isAdmin);
 
             if (recipe == null)
                 return NotFound();
@@ -224,9 +227,12 @@ namespace Forked.Controllers
             if (user == null)
                 return Unauthorized();
 
+            var roles = await _userManager.GetRolesAsync(user);
+            bool isAdmin = roles.Contains("Admin");
+
             try
             {
-                await _recipeService.UpdateAsync(vm, user.Id);
+                await _recipeService.UpdateAsync(vm, user.Id, isAdmin);
             }
             catch (UnauthorizedAccessException)
             {

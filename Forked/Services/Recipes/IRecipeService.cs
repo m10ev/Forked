@@ -10,8 +10,8 @@ namespace Forked.Services.Recipes
         Task<Recipe> ForkAsync(CreateForkViewModel vm, string authorId);
         Task<RecipeDetailViewModel?> GetRecipeDetailAsync(int id, string? currentUserId);
         Task<RecipeListViewModel> GetPagedRecipesAsync(RecipeFilterViewModel filters, RecipeSortOption sortBy, int page, int pageSize, string? currentUserId);
-        Task<EditRecipeViewModel?> GetRecipeForEditAsync(int recipeId, string userId);
-        Task UpdateAsync(EditRecipeViewModel vm, string userId);
+        Task<EditRecipeViewModel?> GetRecipeForEditAsync(int recipeId, string userId, bool isAdmin);
+        Task UpdateAsync(EditRecipeViewModel vm, string userId, bool isAdmin);
         Task DeleteRecipeAsync(int id, string userId, bool isAdmin);
     }
 }

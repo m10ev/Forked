@@ -208,7 +208,7 @@ namespace Forked.Services.Recipes
             };
         }
 
-        public async Task<EditRecipeViewModel?> GetRecipeForEditAsync(int recipeId, string userId)
+        public async Task<EditRecipeViewModel?> GetRecipeForEditAsync(int recipeId, string userId, bool isAdmin)
         {
             var recipe = await _context.Recipes
                 .Include(r => r.RecipeIngredients)
@@ -219,14 +219,14 @@ namespace Forked.Services.Recipes
             if (recipe == null)
                 return null;
 
-            if (recipe.AuthorId != userId)
+            if (recipe.AuthorId != userId && !isAdmin)
                 throw new UnauthorizedAccessException("You can only edit your own recipes.");
 
             return recipe.ToEditViewModel();
         }
 
 
-        public async Task UpdateAsync(EditRecipeViewModel vm, string userId)
+        public async Task UpdateAsync(EditRecipeViewModel vm, string userId, bool isAdmin)
         {
             var recipe = await _context.Recipes
                 .Include(r => r.RecipeIngredients)
@@ -239,7 +239,7 @@ namespace Forked.Services.Recipes
             if (recipe == null)
                 throw new KeyNotFoundException("Recipe not found.");
 
-            if (recipe.AuthorId != userId)
+            if (recipe.AuthorId != userId && !isAdmin)
                 throw new UnauthorizedAccessException("You can only edit your own recipes.");
 
             if (vm.ParsedIngredients == null || vm.ParsedIngredients.Count == 0)

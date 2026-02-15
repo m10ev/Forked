@@ -79,7 +79,16 @@ namespace Forked.Services.Users
             bool alreadyFollowing = await _context.UserFollows.AnyAsync(f => f.FollowerId == currentUserId && f.FollowingId == targetUser.Id); 
             if (!alreadyFollowing) 
             {
-                _context.UserFollows.Add(new UserFollow { FollowerId = currentUserId, FollowingId = targetUser.Id }); 
+                var deletedFollowing = await _context.UserFollows.IgnoreQueryFilters().FirstOrDefaultAsync(f => f.FollowerId == currentUserId && f.FollowingId == targetUser.Id);
+                if (deletedFollowing != null)
+                {
+                    deletedFollowing.DeletedAt = null;
+                }
+                else
+                {
+                    _context.UserFollows.Add(new UserFollow { FollowerId = currentUserId, FollowingId = targetUser.Id });
+                }
+
                 await _context.SaveChangesAsync(); 
             } 
         }

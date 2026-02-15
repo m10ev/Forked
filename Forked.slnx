@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Forked/Forked.csproj" />
-  <Project Path="Tests/Tests.csproj" Id="f5264852-03f7-4511-818a-bec8e786ed38" />
+  <Project Path="Tests/Tests.csproj" Id="f5264852-03f7-4511-818a-bec8e786ed38">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
 </Solution>
