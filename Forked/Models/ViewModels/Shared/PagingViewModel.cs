@@ -26,7 +26,12 @@
             TotalItems = totalItems;
             TotalPages = (int)Math.Ceiling((double)TotalItems / PageSize);
 
-            if(CurrentPage > TotalPages)
+            if (TotalPages == 0)
+            {
+                TotalPages = 1;
+            }
+
+            if (CurrentPage > TotalPages)
             {
                 CurrentPage = TotalPages;
             }

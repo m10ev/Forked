@@ -1,3 +1,4 @@
+using Forked.Data;
 using Forked.Extensions;
 using Forked.Models.Domains;
 using Microsoft.AspNetCore.Identity;
@@ -20,28 +21,35 @@ builder.Services.AddEmailServices();
 
 var app = builder.Build();
 
-using(var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await RoleSeeder.SeedRolesAndAdminAsync(services);
+
+    if (app.Environment.IsDevelopment())
+    {
+        // In dev: wipe and reseed everything (roles + admin included)
+        await DatabaseClearer.ClearAsync(services);
+        await DatabaseSeeder.SeedAsync(services);
+    }
+    else
+    {
+        // In production: only ensure roles + admin exist, never wipe data
+        await RoleSeeder.SeedRolesAndAdminAsync(services);
+    }
 }
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapStaticAssets();
-
 app.MapRazorPages();
 app.MapControllerRoute(
     name: "default",

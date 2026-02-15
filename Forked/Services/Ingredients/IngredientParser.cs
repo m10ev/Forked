@@ -30,16 +30,24 @@ namespace Forked.Services.Ingredients
                 words.RemoveAt(0);
 
             // Unit
-            if (words.Count > 0 && _units.Contains(words[0].Singularize()))
+            if (words.Count > 0)
             {
-                result.Unit = words[0].Singularize();
-                words.RemoveAt(0);
+                var word = words[0].ToLower();
+
+                var singularUnit = _units.FirstOrDefault(u => u == word)
+                                   ?? _units.FirstOrDefault(u => word == u.Pluralize()); // check plural -> singular
+
+                if (singularUnit != null)
+                {
+                    result.Unit = singularUnit;
+                    words.RemoveAt(0);
+                }
             }
 
             // Remove "of"
             if (words.Count > 0 && words[0] == "of")
                 words.RemoveAt(0);
-
+    
             // Remaining words = name / preparation
             var nameParts = new List<string>();
             var prepParts = new List<string>();
@@ -60,28 +68,53 @@ namespace Forked.Services.Ingredients
 
         private decimal ConvertToDecimal(string input)
         {
-            if (decimal.TryParse(input, out var val))
-                return val;
+            // Replace dash with space if present
+            input = input.Replace("-", " ");
 
-            if (input.Contains("/"))
+            var tokens = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            decimal total = 0;
+
+            // First token: whole number
+            if (tokens.Length > 0 && decimal.TryParse(tokens[0], out var whole))
             {
-                var parts = input.Split('/');
-                if (parts.Length == 2 &&
-                    decimal.TryParse(parts[0], out var n) &&
-                    decimal.TryParse(parts[1], out var d))
-                    return n / d;
+                total += whole;
+            }
+            else
+            {
+                // maybe a word number like "one"
+                var words = new Dictionary<string, decimal>
+        {
+            { "a", 1 }, { "an", 1 },
+            { "one", 1 }, { "two", 2 }, { "three", 3 }
+        };
+                if (tokens.Length > 0 && words.TryGetValue(tokens[0], out var wordVal))
+                    total += wordVal;
             }
 
-            var words = new Dictionary<string, decimal>
+            // Second token: fraction
+            if (tokens.Length > 1 && tokens[1].Contains("/"))
             {
-                { "a", 1 }, { "an", 1 },
-                { "one", 1 }, { "two", 2 }, { "three", 3 }
-            };
+                var parts = tokens[1].Split('/');
+                if (parts.Length == 2 &&
+                    decimal.TryParse(parts[0], out var numerator) &&
+                    decimal.TryParse(parts[1], out var denominator))
+                {
+                    total += numerator / denominator;
+                }
+            }
+            else if (tokens.Length == 1 && tokens[0].Contains("/")) // single fraction
+            {
+                var parts = tokens[0].Split('/');
+                if (parts.Length == 2 &&
+                    decimal.TryParse(parts[0], out var numerator) &&
+                    decimal.TryParse(parts[1], out var denominator))
+                {
+                    total += numerator / denominator;
+                }
+            }
 
-            if (words.TryGetValue(input, out var wordVal))
-                return wordVal;
-
-            return 0;
+            return total;
         }
 
         public string Format(ParsedIngredient ingredient)
