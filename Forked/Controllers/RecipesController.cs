@@ -107,7 +107,25 @@ namespace Forked.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return NotFound();
 
-            var recipe = await _recipeService.ForkAsync(vm, user.Id);
+            var recipe = null as Recipe;
+            try
+            {
+                recipe = await _recipeService.ForkAsync(vm, user.Id);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(vm);
+            }
+
 
             return RedirectToAction("Details", new { id = recipe.Id });
         }
@@ -152,6 +170,52 @@ namespace Forked.Controllers
 
             await _favoriteService.RemoveFavouriteAsync(user.Id, id);
             return RedirectToAction("Details", new { id });
+        }
+
+        public async Task<IActionResult> Edit(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            var recipe = await _recipeService.GetRecipeForEditAsync(id, user.Id);
+
+            if (recipe == null)
+                return NotFound();
+
+            return View(recipe);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(EditRecipeViewModel vm)
+        {
+            if (!ModelState.IsValid)
+                return View(vm);
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+                return Unauthorized();
+
+            try
+            {
+                await _recipeService.UpdateAsync(vm, user.Id);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(vm);
+            }
+
+            return RedirectToAction("Details", new { id = vm.Id });
         }
 
         [HttpPost]

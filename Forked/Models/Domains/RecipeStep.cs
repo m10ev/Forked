@@ -1,8 +1,9 @@
-﻿namespace Forked.Models.Domains
+﻿using Forked.Models.Interfaces;
+
+namespace Forked.Models.Domains
 {
-    public class RecipeStep
+    public class RecipeStep : BaseEntity
     {
-        public int Id { get; set; }
         public int StepNumber { get; set; }
         public string? StepName { get; set; }
         public string Instruction { get; set; } = string.Empty;

@@ -303,5 +303,192 @@ namespace Forked.Extensions.Mapping
 
             return steps.OrderBy(s => s.StepNumber).ToList();
         }
+
+        public static EditRecipeViewModel ToEditViewModel(this Recipe recipe)
+        {
+            return new EditRecipeViewModel
+            {
+                Id = recipe.Id,
+                Title = recipe.Title,
+                Description = recipe.Description,
+                PreparationTimeInMinutes = recipe.PreparationTimeInMinutes,
+                CookingTimeInMinutes = recipe.CookingTimeInMinutes,
+                Servings = recipe.Servings,
+                ImagePaths = recipe.ImagePaths ?? new(),
+
+                ParsedIngredients = recipe.RecipeIngredients
+                    .Select(ri => new ParsedIngredientViewModel
+                    {
+                        Quantity = ri.Quantity,
+                        Unit = ri.Unit,
+                        Name = ri.Ingredient?.Name,
+                        Preparation = ri.Preparation
+                    }).ToList(),
+
+                Steps = recipe.RecipeSteps
+                    .OrderBy(s => s.StepNumber)
+                    .Select(s => new EditRecipeStepViewModel
+                    {
+                        Id = s.Id,  // IMPORTANT for diff-based update
+                        StepNumber = s.StepNumber,
+                        StepName = s.StepName,
+                        Instruction = s.Instruction,
+                        ImagePaths = s.ImagePaths ?? new()
+                    }).ToList()
+            };
+        }
+
+
+        public static async Task UpdateFromViewModelAsync(
+    this Recipe recipe,
+    EditRecipeViewModel vm,
+    ForkedDbContext context,
+    IImageService imageService)
+        {
+            // 1. Scalars
+            recipe.Title = vm.Title;
+            recipe.Description = vm.Description;
+            recipe.Servings = vm.Servings;
+            recipe.PreparationTimeInMinutes = vm.PreparationTimeInMinutes;
+            recipe.CookingTimeInMinutes = vm.CookingTimeInMinutes;
+
+            // 2. Recipe Images
+            var vmImagePaths = vm.ImagePaths ?? new List<string>();
+            var removedImages = recipe.ImagePaths
+                .Where(img => !vmImagePaths.Contains(img))
+                .ToList();
+
+            foreach (var img in removedImages)
+                await imageService.DeleteAsync(img);
+
+            recipe.ImagePaths = vmImagePaths.ToList();
+
+            if (vm.ImageFiles?.Any() == true)
+            {
+                foreach (var file in vm.ImageFiles)
+                {
+                    var path = await imageService.SaveRecipeImageAsync(file);
+                    recipe.ImagePaths.Add(path);
+                }
+            }
+
+            // 3. Ingredients (SYNC PATTERN - Stops the Duplicates)
+            var incomingData = await vm.ParsedIngredients.ToRecipeIngredientsAsync(context);
+            var currentRecipeIngredients = recipe.RecipeIngredients.ToList();
+
+            foreach (var existingRI in currentRecipeIngredients)
+            {
+                // MATCH: Check by ID or Name (Case-Insensitive)
+                var match = incomingData.FirstOrDefault(i =>
+                    (i.IngredientId != 0 && i.IngredientId == existingRI.IngredientId) ||
+                    (existingRI.Ingredient != null && i.Ingredient != null &&
+                     string.Equals(i.Ingredient.Name?.Trim(), existingRI.Ingredient.Name?.Trim(), StringComparison.OrdinalIgnoreCase)));
+
+                if (match != null)
+                {
+                    // SYNC: Update the existing row
+                    existingRI.Quantity = match.Quantity;
+                    existingRI.Unit = match.Unit;
+                    existingRI.Preparation = match.Preparation;
+                    existingRI.DeletedAt = null; // Reactivate if it was soft-deleted
+
+                    context.Entry(existingRI).State = EntityState.Modified;
+
+                    // Remove from incoming so we don't ADD it again later
+                    incomingData.Remove(match);
+                }
+                else
+                {
+                    // SOFT-DELETE: Mark as deleted to hide from queries
+                    if (existingRI.DeletedAt == null)
+                    {
+                        existingRI.DeletedAt = DateTime.UtcNow;
+                        context.Entry(existingRI).State = EntityState.Modified;
+                    }
+                }
+            }
+
+            // ADD TRULY NEW: Anything left was not matched to an existing record
+            foreach (var brandNew in incomingData)
+            {
+                recipe.RecipeIngredients.Add(brandNew);
+            }
+
+            // 4. Steps (SYNC PATTERN)
+            var existingSteps = recipe.RecipeSteps.ToList();
+            var vmSteps = vm.Steps ?? new List<EditRecipeStepViewModel>();
+
+            // Soft-delete removed steps
+            foreach (var existing in existingSteps.Where(s => s.DeletedAt == null))
+            {
+                if (!vmSteps.Any(s => s.Id == existing.Id))
+                {
+                    if (existing.ImagePaths != null)
+                    {
+                        foreach (var img in existing.ImagePaths)
+                            await imageService.DeleteAsync(img);
+                    }
+                    existing.DeletedAt = DateTime.UtcNow;
+                    context.Entry(existing).State = EntityState.Modified;
+                }
+            }
+
+            foreach (var stepVm in vmSteps)
+            {
+                if (stepVm.Id.HasValue && stepVm.Id.Value != 0)
+                {
+                    var existing = existingSteps.FirstOrDefault(s => s.Id == stepVm.Id.Value);
+                    if (existing == null) continue;
+
+                    existing.DeletedAt = null;
+                    existing.StepNumber = stepVm.StepNumber;
+                    existing.StepName = stepVm.StepName;
+                    existing.Instruction = stepVm.Instruction;
+
+                    // Step image diff
+                    var vmStepPaths = stepVm.ImagePaths ?? new List<string>();
+                    var removedStepImages = (existing.ImagePaths ?? new List<string>())
+                        .Where(img => !vmStepPaths.Contains(img))
+                        .ToList();
+
+                    foreach (var img in removedStepImages)
+                        await imageService.DeleteAsync(img);
+
+                    existing.ImagePaths = vmStepPaths.ToList();
+
+                    if (stepVm.ImageFiles?.Any() == true)
+                    {
+                        foreach (var file in stepVm.ImageFiles)
+                        {
+                            var path = await imageService.SaveStepImageAsync(file);
+                            existing.ImagePaths.Add(path);
+                        }
+                    }
+                }
+                else
+                {
+                    // Truly New Step
+                    var newStep = new RecipeStep
+                    {
+                        StepNumber = stepVm.StepNumber,
+                        StepName = stepVm.StepName,
+                        Instruction = stepVm.Instruction,
+                        RecipeId = recipe.Id,
+                        ImagePaths = new List<string>()
+                    };
+
+                    if (stepVm.ImageFiles?.Any() == true)
+                    {
+                        foreach (var file in stepVm.ImageFiles)
+                        {
+                            var path = await imageService.SaveStepImageAsync(file);
+                            newStep.ImagePaths.Add(path);
+                        }
+                    }
+                    recipe.RecipeSteps.Add(newStep);
+                }
+            }
+        }
+
     }
 }

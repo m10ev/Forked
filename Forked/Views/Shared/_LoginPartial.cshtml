@@ -18,7 +18,8 @@
                 <span>@displayName</span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Profile</a></li>
+                <li><a class="dropdown-item" asp-controller="Users" asp-action="DetailsMe">Profile</a></li>
+                <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index">Settings</a></li>
                 <li><a class="dropdown-item" asp-controller="Recipes" asp-action="Index" asp-route-OnlyMyRecipes="true">My Recipes</a></li>
                 <li><a class="dropdown-item" asp-controller="Recipes" asp-action="Index" asp-route-OnlyFavourites="true">Favorites</a></li>
                 <li><hr class="dropdown-divider"></li>

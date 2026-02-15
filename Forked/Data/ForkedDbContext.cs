@@ -90,7 +90,7 @@ public class ForkedDbContext : IdentityDbContext<User>
         modelBuilder.Entity<RecipeIngredient>(entity =>
         {
             entity.HasKey(ri => ri.Id);
-            entity.HasQueryFilter(ri => ri.Recipe.DeletedAt == null);
+            entity.HasQueryFilter(ri => ri.DeletedAt == null && ri.Recipe.DeletedAt == null);
 
             entity.HasOne(ri => ri.Recipe)
                 .WithMany(r => r.RecipeIngredients)
@@ -125,7 +125,7 @@ public class ForkedDbContext : IdentityDbContext<User>
         modelBuilder.Entity<RecipeStep>(entity =>
         {
             entity.HasKey(rs => rs.Id);
-            entity.HasQueryFilter(rs => rs.Recipe.DeletedAt == null);
+            entity.HasQueryFilter(rs => rs.Recipe.DeletedAt == null && rs.DeletedAt == null);
 
             entity.Property(rs => rs.ImagePaths)
                 .HasConversion(

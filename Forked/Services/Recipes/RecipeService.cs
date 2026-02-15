@@ -12,13 +12,11 @@ namespace Forked.Services.Recipes
     {
         private readonly ForkedDbContext _context;
         private readonly IImageService _imageService;
-        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public RecipeService(ForkedDbContext context, IImageService imageService, IWebHostEnvironment webHostEnvironment)
+        public RecipeService(ForkedDbContext context, IImageService imageService)
         {
             _context = context;
             _imageService = imageService;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<Recipe> CreateAsync(
@@ -70,7 +68,10 @@ namespace Forked.Services.Recipes
                 throw new ArgumentNullException(nameof(vm));
 
             if(vm.ParsedIngredients == null || !vm.ParsedIngredients.Any())
-                throw new ArgumentException("Recipe must contain at least one ingredient.");
+                throw new InvalidOperationException("Recipe must contain at least one ingredient.");
+
+            if (vm.Steps == null || vm.Steps.Count == 0)
+                throw new InvalidOperationException("A recipe must have at least one step.");
 
             // Create the base recipe entity
             var recipe = await vm.ToRecipeAsync(authorId, _imageService);
@@ -206,6 +207,51 @@ namespace Forked.Services.Recipes
                 SortBy = sortBy
             };
         }
+
+        public async Task<EditRecipeViewModel?> GetRecipeForEditAsync(int recipeId, string userId)
+        {
+            var recipe = await _context.Recipes
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .Include(r => r.RecipeSteps)
+                .FirstOrDefaultAsync(r => r.Id == recipeId);
+
+            if (recipe == null)
+                return null;
+
+            if (recipe.AuthorId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own recipes.");
+
+            return recipe.ToEditViewModel();
+        }
+
+
+        public async Task UpdateAsync(EditRecipeViewModel vm, string userId)
+        {
+            var recipe = await _context.Recipes
+                .Include(r => r.RecipeIngredients)
+                    .ThenInclude(ri => ri.Ingredient)
+                .Include(r => r.RecipeSteps)
+                .IgnoreQueryFilters()
+                .Where(r => r.DeletedAt == null)
+                .FirstOrDefaultAsync(r => r.Id == vm.Id);
+
+            if (recipe == null)
+                throw new KeyNotFoundException("Recipe not found.");
+
+            if (recipe.AuthorId != userId)
+                throw new UnauthorizedAccessException("You can only edit your own recipes.");
+
+            if (vm.ParsedIngredients == null || vm.ParsedIngredients.Count == 0)
+                throw new InvalidOperationException("A recipe must have at least one ingredient.");
+
+            if (vm.Steps == null || vm.Steps.Count == 0)
+                throw new InvalidOperationException("A recipe must have at least one step.");
+
+            await recipe.UpdateFromViewModelAsync(vm, _context, _imageService);
+            await _context.SaveChangesAsync();
+        }
+
 
         public async Task DeleteRecipeAsync(int id, string userId, bool isAdmin)
         {

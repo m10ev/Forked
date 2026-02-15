@@ -1,27 +1,19 @@
-﻿@model Forked.Models.ViewModels.Recipes.CreateForkViewModel
+﻿@model Forked.Models.ViewModels.Recipes.EditRecipeViewModel
 
 @{
-    ViewData["Title"] = "Fork Recipe";
+    ViewData["Title"] = "Edit Recipe";
 }
 
 <div class="my-4">
-    <h2 class="mb-4">Fork Recipe</h2>
+    <h2 class="mb-4">Edit Recipe</h2>
 
-    <form asp-action="Fork" method="post" enctype="multipart/form-data">
+    <form asp-action="Edit" method="post" enctype="multipart/form-data">
         @Html.AntiForgeryToken()
 
-        <!-- Hidden Parent Recipe ID -->
-        <input type="hidden" asp-for="ParentRecipeId" />
-
-        @if (ViewBag.DebugErrors != null)
-        {
-            <div class="alert alert-danger">
-                <strong>ModelState Errors:</strong> @ViewBag.DebugErrors
-            </div>
-        }
+        <!-- Hidden Recipe ID -->
+        <input type="hidden" asp-for="Id" />
 
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div id="client-validation-errors" class="text-danger"></div>
 
         <!-- Title -->
         <div class="mb-3">
@@ -146,6 +138,7 @@
                         </div>
                         <button type="button" class="btn btn-sm btn-danger ms-2" onclick="removeStep(this)">Remove</button>
                     </div>
+                    <input type="hidden" name="Steps[@i].Id" value="@step.Id" />
                     <input type="hidden" name="Steps[@i].StepNumber" value="@step.StepNumber" />
                     <input type="hidden" name="Steps[@i].StepName" value="@step.StepName" />
                     <input type="hidden" name="Steps[@i].Instruction" value="@step.Instruction" />
@@ -154,7 +147,7 @@
             }
         </div>
 
-        <button type="submit" class="btn btn-success mt-3">Create Recipe</button>
+        <button type="submit" class="btn btn-success mt-3">Save Changes</button>
     </form>
 </div>
 
@@ -162,32 +155,10 @@
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <script>
+        // Reuse your Fork JS logic:
         let ingredientIndex = @Model.ParsedIngredients.Count;
         let stepIndex = @Model.Steps.Count;
         let pendingStepFiles = [];
-
-                        document.querySelector("form").addEventListener("submit", function (e) {
-            const ingredientCards = document.querySelectorAll("#ingredientPreviewList .card");
-            const stepCards = document.querySelectorAll("#stepPreviewList .card");
-
-            let errors = [];
-
-            if (ingredientCards.length === 0)
-                errors.push("A recipe must have at least one ingredient.");
-
-            if (stepCards.length === 0)
-                errors.push("A recipe must have at least one step.");
-
-            if (errors.length > 0) {
-                e.preventDefault();
-
-                const errorContainer = document.getElementById("client-validation-errors");
-                errorContainer.className = "alert alert-danger mb-3";
-                errorContainer.innerHTML = "<ul class='mb-0'>" + errors.map(err => `<li>${err}</li>`).join("") + "</ul>";
-
-                errorContainer.scrollIntoView({ behavior: "smooth", block: "center" });
-            }
-        });
 
         // ---------------- Ingredients ----------------
         async function addIngredient() {

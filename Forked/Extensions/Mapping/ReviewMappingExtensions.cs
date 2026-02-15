@@ -1,14 +1,12 @@
 ﻿using Forked.Models.Domains;
 using Forked.Models.ViewModels.Reviews;
-using Forked.Services;
 using Forked.Services.Interfaces;
-using System.Threading.Tasks;
 
 namespace Forked.Extensions.Mapping
 {
     public static class ReviewMappingExtensions
     {
-        public static ReviewViewModel ToViewModel(this Models.Domains.Review review, string? currentUserId = null)
+        public static ReviewViewModel ToViewModel(this Review review, string? currentUserId = null)
         {
             return new ReviewViewModel
             {
@@ -20,7 +18,7 @@ namespace Forked.Extensions.Mapping
                 ImagePaths = review.ImagePaths,
                 CreatedAt = review.CreatedAt,
                 UpdatedAt = review.UpdatedAt,
-                IsCurrentUser =  !string.IsNullOrEmpty(currentUserId) && review.UserId == currentUserId
+                IsCurrentUser = !string.IsNullOrEmpty(currentUserId) && review.UserId == currentUserId
             };
         }
 
@@ -28,13 +26,13 @@ namespace Forked.Extensions.Mapping
         {
             var review = new Review
             {
+                RecipeId = viewModel.RecipeId,
                 UserId = userId,
                 Rating = viewModel.Rating,
                 Message = viewModel.Message,
                 ImagePaths = new List<string>()
             };
 
-            // Handle image uploads and populate ImagePaths
             if (viewModel.Images != null)
             {
                 foreach (var image in viewModel.Images)
@@ -45,6 +43,50 @@ namespace Forked.Extensions.Mapping
             }
 
             return review;
+        }
+
+        // Maps Review → UpdateReviewViewModel for the edit form
+        public static UpdateReviewViewModel ToEditViewModel(this Review review)
+        {
+            return new UpdateReviewViewModel
+            {
+                Id = review.Id,
+                RecipeId = review.RecipeId,
+                Rating = review.Rating,
+                Message = review.Message,
+                ExistingImagePaths = review.ImagePaths.ToList()
+            };
+        }
+
+        // Applies UpdateReviewViewModel onto an existing Review, handling image diff
+        public static async Task UpdateFromViewModelAsync(
+            this Review review,
+            UpdateReviewViewModel vm,
+            IImageService imageService)
+        {
+            review.Rating = vm.Rating;
+            review.Message = vm.Message;
+
+            // Image diff — delete removed images
+            var existingPaths = vm.ExistingImagePaths ?? new List<string>();
+            var removedImages = review.ImagePaths
+                .Where(img => !existingPaths.Contains(img))
+                .ToList();
+
+            foreach (var img in removedImages)
+                await imageService.DeleteAsync(img);
+
+            review.ImagePaths = existingPaths.ToList();
+
+            // Add new images
+            if (vm.NewImages?.Any() == true)
+            {
+                foreach (var image in vm.NewImages)
+                {
+                    var path = await imageService.SaveReviewImageAsync(image);
+                    review.ImagePaths.Add(path);
+                }
+            }
         }
     }
 }

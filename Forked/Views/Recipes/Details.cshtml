@@ -4,42 +4,789 @@
     ViewData["Title"] = Model.Title;
 }
 
-<div class="my-5">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="display-4">@Model.Title</h1>
+<style>
+    /* ── TOKENS ─────────────────────────────── */
+    :root {
+        --brand: #e85a2a;
+        --brand-dk: #c44a1e;
+        --gold: #f5c842;
+        --ink: #1e1e1e;
+        --mid: #5a5a5a;
+        --muted: #7a7a7a;
+        --rule: #e0dbd5;
+        --surface: #faf8f5;
+        --card: #fff;
+        --chip-bg: #f4f0eb;
+    }
 
-            <!-- Recipe Meta Info -->
-            <div class="d-flex align-items-center text-muted mb-3">
-                <span class="me-3">
-                    <i class="bi bi-person"></i> By @Model.AuthorName
+    /* ── HERO STRIP ─────────────────────────── */
+    .detail-hero {
+        position: relative;
+        margin-bottom: 3rem;
+    }
+
+    /* Image scroll track */
+    .detail-hero__gallery {
+        position: relative;
+        width: 100%;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        background: var(--chip-bg);
+        max-height: 520px;
+    }
+
+    .gallery-track {
+        display: flex;
+        transition: transform 420ms cubic-bezier(.4,0,.2,1);
+        height: 520px;
+    }
+
+        .gallery-track img {
+            flex-shrink: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .gallery-placeholder {
+        width: 100%;
+        height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 5rem;
+        background: var(--chip-bg);
+        border-radius: 1.25rem;
+    }
+
+    /* Arrow buttons */
+    .gallery-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.92);
+        border: 1.5px solid var(--rule);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: var(--ink);
+        transition: all 200ms ease;
+        z-index: 2;
+    }
+
+        .gallery-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+        }
+
+    .gallery-btn--prev {
+        left: 0.9rem;
+    }
+
+    .gallery-btn--next {
+        right: 0.9rem;
+    }
+
+    /* Dot indicators */
+    .gallery-dots {
+        position: absolute;
+        bottom: 0.85rem;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 0.4rem;
+        z-index: 2;
+    }
+
+    .gallery-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.5);
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: all 200ms ease;
+    }
+
+        .gallery-dot.active {
+            background: #fff;
+            transform: scale(1.3);
+        }
+
+    /* ── META HEADER ────────────────────────── */
+    .detail-meta {
+        padding: 2rem 0 0;
+    }
+
+    .detail-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .detail-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.2rem 0.65rem;
+        border-radius: 100px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .detail-badge--forked {
+        background: rgba(232,90,42,0.1);
+        color: var(--brand);
+    }
+
+    .detail-badge--original {
+        background: rgba(61,90,71,0.1);
+        color: #3d5a47;
+    }
+
+    .detail-badge--author {
+        background: var(--chip-bg);
+        color: var(--muted);
+    }
+
+    .detail-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        margin: 0 0 1rem;
+    }
+
+    .detail-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-stat {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.88rem;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+        .detail-stat i {
+            color: var(--brand);
+        }
+
+    .detail-stat--rating {
+        color: var(--ink);
+    }
+
+        .detail-stat--rating .stars {
+            color: var(--gold);
+        }
+
+    /* ── ACTION ROW ─────────────────────────── */
+    .detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .act-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 0.55rem 1.2rem;
+        border-radius: 0.5rem;
+        border: 1.5px solid transparent;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 200ms ease;
+        white-space: nowrap;
+    }
+
+    .act-btn--primary {
+        background: var(--brand);
+        color: #fff;
+        box-shadow: 0 3px 12px rgba(232,90,42,0.28);
+    }
+
+        .act-btn--primary:hover {
+            background: var(--brand-dk);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .act-btn--ghost {
+        background: var(--chip-bg);
+        color: var(--ink);
+        border-color: var(--rule);
+    }
+
+        .act-btn--ghost:hover {
+            border-color: var(--brand);
+            color: var(--brand);
+        }
+
+    .act-btn--danger {
+        background: #fff1ef;
+        color: #c0392b;
+        border-color: #fad3cc;
+    }
+
+        .act-btn--danger:hover {
+            background: #c0392b;
+            color: #fff;
+            border-color: #c0392b;
+        }
+
+    .act-btn--fav {
+        background: #fff0f5;
+        color: #e84393;
+        border-color: #ffd6e8;
+    }
+
+        .act-btn--fav:hover {
+            background: #e84393;
+            color: #fff;
+            border-color: #e84393;
+        }
+
+    .act-btn--edit {
+        background: #fffbeb;
+        color: #b45309;
+        border-color: #fde68a;
+    }
+
+        .act-btn--edit:hover {
+            background: #b45309;
+            color: #fff;
+            border-color: #b45309;
+        }
+
+    /* ── FORK BANNER ────────────────────────── */
+    .fork-banner {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 0.75rem 1.1rem;
+        font-size: 0.88rem;
+        color: var(--mid);
+        margin-bottom: 0.75rem;
+    }
+
+        .fork-banner strong {
+            color: var(--ink);
+        }
+
+        .fork-banner i {
+            color: var(--brand);
+        }
+
+    /* ── TIME CHIPS ─────────────────────────── */
+    .time-chips {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+
+    .time-chip {
+        flex: 1;
+        min-width: 120px;
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1rem 1.25rem;
+        text-align: center;
+    }
+
+    .time-chip__label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .time-chip__value {
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--ink);
+        line-height: 1;
+    }
+
+    .time-chip__unit {
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .time-chip--total {
+        border-color: var(--brand);
+    }
+
+        .time-chip--total .time-chip__value {
+            color: var(--brand);
+        }
+
+    /* ── DESCRIPTION ────────────────────────── */
+    .detail-description {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: var(--mid);
+        margin-bottom: 2.5rem;
+        max-width: 72ch;
+    }
+
+    /* ── LAYOUT GRID ────────────────────────── */
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+        align-items: start;
+    }
+
+    @@media (max-width: 768px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ── SECTION CARDS ──────────────────────── */
+    .section-card {
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 1rem;
+        overflow: hidden;
+    }
+
+    .section-card__header {
+        padding: 0.9rem 1.25rem;
+        border-bottom: 1.5px solid var(--rule);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+        .section-card__header h3 {
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--muted);
+            margin: 0;
+        }
+
+    .section-card__header-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--brand);
+        flex-shrink: 0;
+    }
+
+    .section-card__body {
+        padding: 1.25rem;
+    }
+
+    /* Ingredient list */
+    .ingredient-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .ingredient-list li {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.55rem 0;
+            border-bottom: 1px solid var(--rule);
+            font-size: 0.9rem;
+            color: var(--ink);
+        }
+
+            .ingredient-list li:last-child {
+                border-bottom: none;
+            }
+
+            .ingredient-list li::before {
+                content: '';
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: var(--brand);
+                flex-shrink: 0;
+                margin-top: 0.4rem;
+            }
+
+    /* Steps */
+    .step-item {
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+    .step-num {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        font-size: 0.82rem;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 0.15rem;
+    }
+
+    .step-content__title {
+        font-size: 0.92rem;
+        font-weight: 800;
+        color: var(--ink);
+        margin: 0 0 0.4rem;
+    }
+
+    .step-content__text {
+        font-size: 0.9rem;
+        color: var(--mid);
+        line-height: 1.7;
+        margin: 0 0 0.75rem;
+    }
+
+    .step-images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+        .step-images img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 1.5px solid var(--rule);
+        }
+
+    /* ── REVIEWS ────────────────────────────── */
+    .reviews-section {
+        background: var(--card);
+        border: 1.5px solid var(--rule);
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .reviews-header {
+        background: var(--chip-bg);
+        border-bottom: 1.5px solid var(--rule);
+        padding: 1.1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+        .reviews-header h3 {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0;
+        }
+
+            .reviews-header h3 span {
+                color: var(--brand);
+            }
+
+    .reviews-body {
+        padding: 1.5rem;
+    }
+
+    /* Inline create form */
+    #reviewForm {
+        background: var(--surface);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .form-label-upper {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 0.4rem;
+    }
+
+    /* Review cards */
+    .review-card {
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        padding: 1.1rem 1.25rem;
+        margin-bottom: 1rem;
+        background: var(--card);
+        transition: border-color 200ms ease;
+    }
+
+        .review-card:hover {
+            border-color: #d0cac4;
+        }
+
+        .review-card:last-child {
+            margin-bottom: 0;
+        }
+
+    .review-card__top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .review-card__name {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: var(--ink);
+    }
+
+    .review-card__stars {
+        font-size: 0.95rem;
+        margin-top: 0.2rem;
+    }
+
+    .review-card__date {
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+
+    .review-card__body {
+        font-size: 0.9rem;
+        color: var(--mid);
+        line-height: 1.65;
+        margin: 0.5rem 0 0;
+    }
+
+    .review-card__images {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-top: 0.75rem;
+    }
+
+        .review-card__images img {
+            width: 68px;
+            height: 68px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            border: 1.5px solid var(--rule);
+        }
+
+    .review-card__actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+    }
+
+    .review-action-btn {
+        background: none;
+        border: none;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: none;
+        transition: color 200ms ease;
+    }
+
+    .review-action-btn--edit {
+        color: var(--muted);
+    }
+
+        .review-action-btn--edit:hover {
+            color: var(--ink);
+        }
+
+    .review-action-btn--delete {
+        color: var(--brand);
+    }
+
+        .review-action-btn--delete:hover {
+            color: var(--brand-dk);
+        }
+
+    .review-action-sep {
+        color: var(--rule);
+        font-size: 0.8rem;
+    }
+
+    /* Load more */
+    .load-more-btn {
+        display: block;
+        width: 100%;
+        padding: 0.65rem;
+        background: var(--chip-bg);
+        border: 1.5px solid var(--rule);
+        border-radius: 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--brand);
+        cursor: pointer;
+        text-align: center;
+        transition: all 200ms ease;
+        margin-top: 1rem;
+    }
+
+        .load-more-btn:hover {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+        }
+
+    /* ── BACK LINK ──────────────────────────── */
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 200ms ease;
+        margin-bottom: 2rem;
+    }
+
+        .back-link:hover {
+            color: var(--brand);
+        }
+</style>
+
+<div class="my-5">
+
+    <!-- Back -->
+    <a asp-action="Index" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Recipes
+    </a>
+
+    <!-- ── HERO ── -->
+    <div class="detail-hero">
+
+        @if (Model.ImagePaths.Any())
+        {
+            <div class="detail-hero__gallery">
+                <div class="gallery-track" id="galleryTrack">
+                    @foreach (var img in Model.ImagePaths)
+                    {
+                        <img src="@img" alt="@Model.Title" />
+                    }
+                </div>
+
+                @if (Model.ImagePaths.Count > 1)
+                {
+                    <button class="gallery-btn gallery-btn--prev" onclick="galleryMove(-1)" aria-label="Previous">‹</button>
+                    <button class="gallery-btn gallery-btn--next" onclick="galleryMove(1)" aria-label="Next">›</button>
+
+                    <div class="gallery-dots" id="galleryDots">
+                        @for (int i = 0; i < Model.ImagePaths.Count; i++)
+                        {
+                            <button class="gallery-dot @(i == 0 ? "active" : "")"
+                                    onclick="galleryGoto(@i)" aria-label="Image @(i + 1)"></button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gallery-placeholder">🍽️</div>
+        }
+
+        <!-- Meta -->
+        <div class="detail-meta">
+            <div class="detail-eyebrow">
+                @if (Model.IsForked)
+                {
+                    <span class="detail-badge detail-badge--forked">🍴 Forked</span>
+                }
+                else
+                {
+                    <span class="detail-badge detail-badge--original">✨ Original</span>
+                }
+                <span class="detail-badge detail-badge--author">
+                    <i class="bi bi-person"></i> @Model.AuthorName
                 </span>
-                <span class="me-3">
-                    <i class="bi bi-clock"></i> @Model.TotalTimeInMinutes min
-                </span>
-                <span class="me-3">
-                    <i class="bi bi-star-fill text-warning"></i> @Model.AverageRating.ToString("F1") (@Model.ReviewCount reviews)
-                </span>
-                <span>
-                    <i class="bi bi-people"></i> @Model.Servings servings
+                <span class="detail-badge detail-badge--author">
+                    <i class="bi bi-calendar3"></i> @Model.CreatedAt.ToString("MMM yyyy")
                 </span>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="mb-3">
-                <a asp-action="Fork" asp-route-id="@Model.Id" class="btn btn-secondary">
+            <h1 class="detail-title">@Model.Title</h1>
+
+            <div class="detail-stats">
+                <div class="detail-stat detail-stat--rating">
+                    <span class="stars">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <span style="color:@(i <= Math.Round(Model.AverageRating) ? "#f5c842" : "#e0dbd5");">★</span>
+                        }
+                    </span>
+                    <strong>@Model.AverageRating.ToString("F1")</strong>
+                    <span style="color:var(--muted);font-weight:400;">(@Model.ReviewCount reviews)</span>
+                </div>
+                <div class="detail-stat"><i class="bi bi-people"></i> @Model.Servings servings</div>
+                @if (Model.ForkCount > 0)
+                {
+                    <div class="detail-stat"><i class="bi bi-diagram-3"></i> Forked @Model.ForkCount time@(Model.ForkCount > 1 ? "s" : "")</div>
+                }
+            </div>
+
+            <!-- Actions -->
+            <div class="detail-actions">
+                <a asp-action="Fork" asp-route-id="@Model.Id" class="act-btn act-btn--ghost">
                     <i class="bi bi-diagram-3"></i> Fork Recipe
                 </a>
-                
+
                 @if (Model.IsAuthor || User.IsInRole("Admin"))
                 {
-                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="act-btn act-btn--edit">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
                     <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this recipe?')">
+                        <button type="submit" class="act-btn act-btn--danger"
+                                onclick="return confirm('Are you sure you want to delete this recipe?')">
                             <i class="bi bi-trash"></i> Delete
                         </button>
                     </form>
@@ -49,7 +796,7 @@
                 {
                     <form asp-action="UnfavoriteRecipe" method="post" class="d-inline">
                         <input type="hidden" name="id" value="@Model.Id" />
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="act-btn act-btn--fav">
                             <i class="bi bi-heart-fill"></i> Unfavorite
                         </button>
                     </form>
@@ -58,240 +805,300 @@
                 {
                     <form asp-action="FavoriteRecipe" method="post" class="d-inline">
                         <input type="hidden" name="id" value="@Model.Id" />
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="act-btn act-btn--fav">
                             <i class="bi bi-heart"></i> Favorite
                         </button>
                     </form>
                 }
             </div>
 
-            <!-- Fork Info -->
+            <!-- Fork banners -->
             @if (Model.IsForked)
             {
-                <div class="alert alert-info">
+                <div class="fork-banner">
                     <i class="bi bi-diagram-3"></i>
                     Forked from <strong>@Model.ParentRecipeTitle</strong> by @Model.ParentRecipeAuthorName
                 </div>
             }
-            @if (Model.ForkCount > 0)
-            {
-                <div class="alert alert-secondary">
-                    <i class="bi bi-diagram-3"></i>
-                    This recipe has been forked @Model.ForkCount time@(Model.ForkCount > 1 ? "s" : "")
-                </div>
-            }
         </div>
     </div>
 
-    <!-- Images -->
-    @if (Model.ImagePaths.Any())
-    {
-        <div class="row mb-4">
-            <div class="col-12">
-                <div id="recipeCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner">
-                        @for (int i = 0; i < Model.ImagePaths.Count; i++)
-                        {
-                            <div class="carousel-item @(i == 0 ? "active" : "")">
-                                <img src="@Model.ImagePaths[i]" class="d-block w-100" alt="Recipe image" style="max-height: 500px; object-fit: cover;">
-                            </div>
-                        }
-                    </div>
-                    @if (Model.ImagePaths.Count > 1)
+    <!-- ── TIME CHIPS ── -->
+    <div class="time-chips">
+        <div class="time-chip">
+            <div class="time-chip__label">Prep</div>
+            <div class="time-chip__value">@(Model.PreparationTimeInMinutes ?? 0)</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip">
+            <div class="time-chip__label">Cook</div>
+            <div class="time-chip__value">@(Model.CookingTimeInMinutes ?? 0)</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip time-chip--total">
+            <div class="time-chip__label">Total</div>
+            <div class="time-chip__value">@Model.TotalTimeInMinutes</div>
+            <div class="time-chip__unit">min</div>
+        </div>
+        <div class="time-chip">
+            <div class="time-chip__label">Serves</div>
+            <div class="time-chip__value">@Model.Servings</div>
+            <div class="time-chip__unit">people</div>
+        </div>
+    </div>
+
+    <!-- ── DESCRIPTION ── -->
+    <p class="detail-description">@Model.Description</p>
+
+    <!-- ── INGREDIENTS + STEPS ── -->
+    <div class="detail-grid">
+
+        <!-- Ingredients -->
+        <div class="section-card">
+            <div class="section-card__header">
+                <div class="section-card__header-dot"></div>
+                <h3>Ingredients</h3>
+            </div>
+            <div class="section-card__body">
+                <ul class="ingredient-list">
+                    @foreach (var ingredient in Model.Ingredients)
                     {
-                        <button class="carousel-control-prev" type="button" data-bs-target="#recipeCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#recipeCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
+                        <li>@ingredient.DisplayText</li>
                     }
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Description -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h3>Description</h3>
-            <p class="lead">@Model.Description</p>
-        </div>
-    </div>
-
-    <!-- Time Info -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Prep Time</h5>
-                    <p class="card-text display-6">@(Model.PreparationTimeInMinutes ?? 0) min</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Cook Time</h5>
-                    <p class="card-text display-6">@(Model.CookingTimeInMinutes ?? 0) min</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h5 class="card-title">Total Time</h5>
-                    <p class="card-text display-6">@Model.TotalTimeInMinutes min</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Ingredients Section -->
-        <div class="col-md-4 mb-4">
-            <div class="card ingredients-card">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Ingredients</h3>
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        @foreach (var ingredient in Model.Ingredients)
-                        {
-                            <li class="list-group-item">
-                                @ingredient.DisplayText
-                            </li>
-                        }
-                    </ul>
-                </div>
+                </ul>
             </div>
         </div>
 
-        <!-- Steps Section -->
-        <div class="col-md-8 mb-4">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h3 class="mb-0">Instructions</h3>
-                </div>
-                <div class="card-body">
-                    @foreach (var step in Model.Steps)
-                    {
-                        <div class="step-block mb-4">
-                            <h5 class="text-primary">@step.DisplayTitle</h5>
-                            <p>@step.Instruction</p>
-
+        <!-- Steps -->
+        <div class="section-card">
+            <div class="section-card__header">
+                <div class="section-card__header-dot"></div>
+                <h3>Instructions</h3>
+            </div>
+            <div class="section-card__body">
+                @foreach (var step in Model.Steps)
+                {
+                    <div class="step-item">
+                        <div class="step-num">@step.StepNumber</div>
+                        <div>
+                            @if (!string.IsNullOrEmpty(step.StepName))
+                            {
+                                <p class="step-content__title">@step.StepName</p>
+                            }
+                            <p class="step-content__text">@step.Instruction</p>
                             @if (step.ImagePaths.Any())
                             {
-                                <div class="row">
-                                    @foreach (var imagePath in step.ImagePaths)
+                                <div class="step-images">
+                                    @foreach (var img in step.ImagePaths)
                                     {
-                                        <div class="col-md-6 mb-2">
-                                            <img src="@imagePath" class="img-fluid rounded" alt="Step image">
-                                        </div>
+                                        <img src="@img" alt="Step image" />
                                     }
                                 </div>
                             }
                         </div>
-                        @if (step != Model.Steps.Last())
-                        {
-                            <hr />
-                        }
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </div>
     </div>
 
-    <!-- Reviews Section -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-warning">
-                    <h3 class="mb-0">Reviews (@Model.ReviewCount)</h3>
-                </div>
-                <div class="card-body">
-                    @if (User.Identity.IsAuthenticated && !Model.HasUserReviewed)
-                    {
-                        <div class="alert alert-info mb-3">
-                            <a asp-controller="Reviews" asp-action="Create" asp-route-recipeId="@Model.Id" class="btn btn-primary">
-                                Write a Review
-                            </a>
-                        </div>
-                    }
+    <!-- ── REVIEWS ── -->
+    <div class="reviews-section">
+        <div class="reviews-header">
+            <h3>Reviews <span>(@Model.ReviewCount)</span></h3>
+            @if (User.Identity.IsAuthenticated && !Model.HasUserReviewed)
+            {
+                <button class="act-btn act-btn--primary" style="font-size:0.82rem;padding:0.45rem 1rem;"
+                        onclick="toggleReviewForm()">
+                    ✏️ Write a Review
+                </button>
+            }
+        </div>
 
-                    @if (Model.Reviews.Any())
-                    {
-                        @foreach (var review in Model.Reviews)
-                        {
-                            <div class="card review-card mb-3">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
-                                            <h5 class="reviewer-name mb-1">@review.DisplayName</h5>
-                                            <div class="mb-2">
-                                                @for (int i = 1; i <= 5; i++)
-                                                {
-                                                    <i class="bi bi-star@(i <= review.Rating ? "-fill text-warning" : "")"></i>
-                                                }
-                                            </div>
-                                        </div>
-                                        <small class="review-date text-muted">@review.CreatedAt.ToString("MMM dd, yyyy")</small>
-                                    </div>
-                                    <p class="review-body mb-2">@review.Message</p>
+        <div class="reviews-body">
 
-                                    @if (review.ImagePaths.Any())
-                                    {
-                                        <div class="row">
-                                            @foreach (var imagePath in review.ImagePaths)
-                                            {
-                                                <div class="col-md-3 mb-2">
-                                                    <img src="@imagePath" class="img-fluid rounded" alt="Review image">
-                                                </div>
-                                            }
-                                        </div>
-                                    }
+            @if (User.Identity.IsAuthenticated && !Model.HasUserReviewed)
+            {
+                <div id="reviewForm">
+                    <form asp-controller="Reviews" asp-action="Create" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="RecipeId" value="@Model.Id" />
 
-                                    @if (review.IsCurrentUser)
-                                    {
-                                        <div class="mt-2">
-                                            <a asp-controller="Reviews" asp-action="Edit" asp-route-id="@review.Id" class="btn btn-sm btn-warning">
-                                                Edit
-                                            </a>
-                                            <form asp-controller="Reviews" asp-action="Delete" asp-route-id="@review.Id" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this review?')">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        </div>
-                                    }
-                                </div>
+                        <div class="mb-3">
+                            <label class="form-label-upper">Rating</label>
+                            <div class="star-picker d-flex gap-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <label class="star-label" style="cursor:pointer;font-size:1.75rem;color:#e0dbd5;transition:color 150ms ease;">
+                                        <input type="radio" name="Rating" value="@i" style="display:none;" required />★
+                                    </label>
+                                }
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        <p class="text-muted">No reviews yet. Be the first to review this recipe!</p>
-                    }
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label-upper">Your Review</label>
+                            <textarea name="Message" class="form-control" rows="3" maxlength="500"
+                                  placeholder="Share your thoughts on this recipe…"
+                                  style="border-color:var(--rule);border-radius:0.5rem;font-size:0.92rem;"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label-upper">Photos (optional)</label>
+                            <input type="file" name="Images" multiple accept="image/*" class="form-control"
+                                   style="border-color:var(--rule);border-radius:0.5rem;" />
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="act-btn act-btn--primary">Submit Review</button>
+                            <button type="button" class="act-btn act-btn--ghost" onclick="toggleReviewForm()">Cancel</button>
+                        </div>
+                    </form>
                 </div>
+            }
+
+            <div id="reviewList"></div>
+
+            <button class="load-more-btn" id="loadMoreBtn" onclick="loadReviews()" style="display:none;">
+                Load more reviews
+            </button>
+
+            <div id="noReviews" style="display:none;">
+                <p style="color:var(--muted);font-size:0.92rem;margin:0;">No reviews yet. Be the first to review this recipe!</p>
             </div>
+
         </div>
     </div>
 
-    <!-- Back Button -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <a asp-action="Index" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Recipes
-            </a>
-        </div>
-    </div>
 </div>
 
 @section Scripts {
     <script>
-        // Add any JavaScript for interactivity here (if any lol)
+        // ── GALLERY ─────────────────────────────
+        let galleryIndex = 0;
+        const totalImages = @Model.ImagePaths.Count;
+
+        function galleryGoto(idx) {
+            galleryIndex = idx;
+            document.getElementById("galleryTrack").style.transform = `translateX(-${idx * 100}%)`;
+            document.querySelectorAll(".gallery-dot").forEach((d, i) =>
+                d.classList.toggle("active", i === idx));
+        }
+
+        function galleryMove(dir) {
+            galleryGoto((galleryIndex + dir + totalImages) % totalImages);
+        }
+
+        // Keyboard nav
+        document.addEventListener("keydown", e => {
+            if (e.key === "ArrowLeft")  galleryMove(-1);
+            if (e.key === "ArrowRight") galleryMove(1);
+        });
+
+        // ── REVIEWS ─────────────────────────────
+        let currentPage = 1;
+        const pageSize  = 5;
+        const recipeId  = @Model.Id;
+        let loading     = false;
+        let exhausted   = false;
+
+        async function loadReviews() {
+            if (loading || exhausted) return;
+            loading = true;
+
+            const btn = document.getElementById("loadMoreBtn");
+            if (btn) btn.textContent = "Loading…";
+
+            const res  = await fetch(`/Reviews/GetPaged?recipeId=${recipeId}&page=${currentPage}&pageSize=${pageSize}`);
+            const data = await res.json();
+            const list = document.getElementById("reviewList");
+
+            if (data.items.length === 0 && currentPage === 1) {
+                document.getElementById("noReviews").style.display = "block";
+                if (btn) btn.style.display = "none";
+                loading = false;
+                return;
+            }
+
+            data.items.forEach(r => {
+                const stars = Array.from({ length: 5 }, (_, i) =>
+                    `<span style="color:${i < r.rating ? '#f5c842' : '#e0dbd5'};">★</span>`
+                ).join("");
+
+                const images = r.imagePaths?.length
+                    ? `<div class="review-card__images">
+                        ${r.imagePaths.map(src =>
+                            `<img src="${src}" alt="Review image" />`
+                        ).join("")}
+                       </div>`
+                    : "";
+
+                const actions = r.isCurrentUser
+                    ? `<div class="review-card__actions">
+                        <a href="/Reviews/Edit/${r.id}" class="review-action-btn review-action-btn--edit">✏️ Edit</a>
+                        <span class="review-action-sep">|</span>
+                        <form action="/Reviews/Delete/${r.id}" method="post" style="display:inline;">
+                            <input type="hidden" name="__RequestVerificationToken" value="${getAntiForgeryToken()}" />
+                            <input type="hidden" name="recipeId" value="${recipeId}" />
+                            <button type="submit" class="review-action-btn review-action-btn--delete"
+                                    onclick="return confirm('Delete this review?')">🗑️ Delete</button>
+                        </form>
+                       </div>`
+                    : "";
+
+                const card = document.createElement("div");
+                card.className = "review-card";
+                card.innerHTML = `
+                    <div class="review-card__top">
+                        <div>
+                            <div class="review-card__name">${r.displayName}</div>
+                            <div class="review-card__stars">${stars}</div>
+                        </div>
+                        <span class="review-card__date">${formatDate(r.createdAt)}</span>
+                    </div>
+                    <p class="review-card__body">${r.message}</p>
+                    ${images}
+                    ${actions}
+                `;
+                list.appendChild(card);
+            });
+
+            currentPage++;
+            const hasMore = currentPage <= data.totalPages;
+            if (btn) {
+                btn.style.display = hasMore ? "block" : "none";
+                btn.textContent = "Load more reviews";
+            }
+            if (!hasMore) exhausted = true;
+            loading = false;
+        }
+
+        function formatDate(iso) {
+            return new Date(iso).toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+        }
+
+        function getAntiForgeryToken() {
+            return document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? "";
+        }
+
+        function toggleReviewForm() {
+            const f = document.getElementById("reviewForm");
+            f.style.display = f.style.display === "none" ? "block" : "none";
+        }
+
+        // Star picker
+        document.querySelectorAll(".star-label").forEach((label, idx, all) => {
+            label.addEventListener("mouseenter", () =>
+                all.forEach((l, i) => l.style.color = i <= idx ? "#f5c842" : "#e0dbd5"));
+            label.addEventListener("mouseleave", () => {
+                const checked = document.querySelector(".star-label input:checked");
+                const ci = checked ? parseInt(checked.value) - 1 : -1;
+                all.forEach((l, i) => l.style.color = i <= ci ? "#f5c842" : "#e0dbd5");
+            });
+            label.addEventListener("click", () =>
+                all.forEach((l, i) => l.style.color = i <= idx ? "#f5c842" : "#e0dbd5"));
+        });
+
+        loadReviews();
     </script>
 }

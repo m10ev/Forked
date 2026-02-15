@@ -1,0 +1,121 @@
+﻿@model Forked.Models.ViewModels.Reviews.UpdateReviewViewModel
+
+@{
+    ViewData["Title"] = "Edit Review";
+}
+
+<div class="my-5" style="max-width:680px;margin:auto;">
+
+    <div style="margin-bottom:1.5rem;">
+        <a asp-controller="Recipes" asp-action="Details" asp-route-id="@Model.RecipeId"
+           style="color:#e85a2a;font-weight:600;font-size:0.9rem;text-decoration:none;">
+            ← Back to Recipe
+        </a>
+    </div>
+
+    <div style="background:#fff;border-radius:1rem;border:1px solid #e0dbd5;box-shadow:0 2px 8px rgba(0,0,0,0.08);overflow:hidden;">
+
+        <div style="background:#f4f0eb;border-bottom:1px solid #e0dbd5;padding:1.25rem 1.5rem;">
+            <h2 style="font-weight:800;color:#1e1e1e;margin:0;">Edit Review</h2>
+        </div>
+
+        <div style="padding:1.75rem;">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="border-radius:0.5rem;display:none;"></div>
+
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="RecipeId" />
+
+                <!-- Rating -->
+                <div class="mb-4">
+                    <label class="form-label" style="font-weight:700;font-size:0.82rem;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.05em;">Rating</label>
+                    <div class="star-picker d-flex gap-2">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <label class="star-label" style="cursor:pointer;font-size:2rem;color:@(i <= Model.Rating ? "#f5c842" : "#e0dbd5");transition:color 150ms ease;">
+                                <input type="radio" name="Rating" value="@i" style="display:none;" @(i == Model.Rating ? "checked" : "") />
+                                ★
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="Rating" class="text-danger" style="font-size:0.82rem;"></span>
+                </div>
+
+                <!-- Message -->
+                <div class="mb-4">
+                    <label class="form-label" style="font-weight:700;font-size:0.82rem;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.05em;">Your Review</label>
+                    <textarea asp-for="Message" class="form-control" rows="4" maxlength="1000"
+                              style="border-color:#e0dbd5;border-radius:0.5rem;font-size:0.95rem;resize:vertical;"></textarea>
+                    <span asp-validation-for="Message" class="text-danger" style="font-size:0.82rem;"></span>
+                </div>
+
+                <!-- Existing Images -->
+                @if (Model.ExistingImagePaths.Any())
+                {
+                    <div class="mb-4">
+                        <label class="form-label" style="font-weight:700;font-size:0.82rem;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.05em;">Current Photos</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            @for (int i = 0; i < Model.ExistingImagePaths.Count; i++)
+                            {
+                                <div class="position-relative" id="img-wrap-@i">
+                                    <img src="@Model.ExistingImagePaths[i]"
+                                         style="width:90px;height:90px;object-fit:cover;border-radius:0.5rem;border:1px solid #e0dbd5;" />
+                                    <button type="button"
+                                            onclick="removeExistingImage(this, @i)"
+                                            style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#e85a2a;color:#fff;border:none;font-size:0.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">
+                                        ×
+                                    </button>
+                                    <input type="hidden" name="ExistingImagePaths" value="@Model.ExistingImagePaths[i]" id="existing-img-@i" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- New Images -->
+                <div class="mb-4">
+                    <label class="form-label" style="font-weight:700;font-size:0.82rem;color:#7a7a7a;text-transform:uppercase;letter-spacing:0.05em;">Add New Photos</label>
+                    <input type="file" name="NewImages" multiple accept="image/*" class="form-control"
+                           style="border-color:#e0dbd5;border-radius:0.5rem;" />
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit"
+                            style="background:#e85a2a;color:#fff;font-weight:700;border:none;border-radius:0.5rem;padding:0.6rem 1.75rem;font-size:0.95rem;cursor:pointer;transition:background 200ms ease;">
+                        Save Changes
+                    </button>
+                    <a asp-controller="Recipes" asp-action="Details" asp-route-id="@Model.RecipeId"
+                       style="background:#f4f0eb;color:#5a5a5a;font-weight:600;border-radius:0.5rem;padding:0.6rem 1.25rem;font-size:0.95rem;text-decoration:none;display:inline-flex;align-items:center;">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <script>
+        // Star picker
+        document.querySelectorAll(".star-label").forEach((label, idx, all) => {
+            label.addEventListener("mouseenter", () => {
+                all.forEach((l, i) => l.style.color = i <= idx ? "#f5c842" : "#e0dbd5");
+            });
+            label.addEventListener("mouseleave", () => {
+                const checked = document.querySelector(".star-label input:checked");
+                const checkedIdx = checked ? parseInt(checked.value) - 1 : -1;
+                all.forEach((l, i) => l.style.color = i <= checkedIdx ? "#f5c842" : "#e0dbd5");
+            });
+            label.addEventListener("click", () => {
+                all.forEach((l, i) => l.style.color = i <= idx ? "#f5c842" : "#e0dbd5");
+            });
+        });
+
+        // Remove existing image
+        function removeExistingImage(btn, idx) {
+            document.getElementById(`img-wrap-${idx}`).remove();
+        }
+    </script>
+}

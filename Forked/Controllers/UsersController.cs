@@ -32,6 +32,18 @@ namespace Forked.Controllers
             return View(userDetails);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DetailsMe()
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Unauthorized();
+            }
+
+            return RedirectToAction("Details", new { displayName = currentUser.DisplayName });
+        }
+
         // GET: /User/Followers/{displayName}
         [HttpGet("Followers/{displayName}")]
         public async Task<IActionResult> Followers(string displayName, int page = 1, int pageSize = 12) 

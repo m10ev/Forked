@@ -1,8 +1,9 @@
-﻿namespace Forked.Models.Domains
+﻿using Forked.Models.Interfaces;
+
+namespace Forked.Models.Domains
 {
-    public class RecipeIngredient
+    public class RecipeIngredient : BaseEntity
     {
-        public int Id { get; set; }
         public int RecipeId { get; set; }
         public Recipe Recipe { get; set; } = null!;
         public int IngredientId { get; set; }

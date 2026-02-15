@@ -4,6 +4,7 @@ using Forked.Services;
 using Forked.Services.Ingredients;
 using Forked.Services.Interfaces;
 using Forked.Services.Recipes;
+using Forked.Services.Reviews;
 using Forked.Services.UserFavoriteRecipes;
 using Forked.Services.Users;
 using Microsoft.AspNetCore.Identity;
@@ -52,6 +53,11 @@ namespace Forked.Extensions
         public static void AddIngredientServices(this IServiceCollection services)
         {
             services.AddTransient<IIngredientParser, IngredientParser>();
+        }
+
+        public static void AddReviewServices(this IServiceCollection services)
+        {
+            services.AddTransient<IReviewService, ReviewService>();
         }
 
         public static void AddFavoriteServices(this IServiceCollection services)

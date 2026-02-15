@@ -11,6 +11,7 @@ builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddIdentityServices();
 builder.Services.AddImageServices();
 builder.Services.AddRecipeServices();
+builder.Services.AddReviewServices();
 builder.Services.AddUserServices();
 builder.Services.AddIngredientServices();
 builder.Services.AddFavoriteServices();
